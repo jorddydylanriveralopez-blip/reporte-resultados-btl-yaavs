@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#eef4fa" />
+    <meta
+      name="description"
+      content="Reporte de Resultados – Activación BTL YAAVS. Formato rápido de cierre."
+    />
+    <title>Reporte de Resultados · Activación BTL YAAVS</title>
+    <link rel="icon" href="./favicon.png" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles-base.css?v=20260811r1" />
+    <link rel="stylesheet" href="./reporte.css?v=20260811r1" />
+  </head>
+  <body class="report-body">
+    <div class="atmosphere" aria-hidden="true">
+      <div class="wash wash-a"></div>
+      <div class="wash wash-b"></div>
+    </div>
+
+    <header class="topbar report-topbar">
+      <div class="brand">
+        <img
+          src="./assets/logo-yaavs.png"
+          alt="YAAVS"
+          class="brand-logo"
+          width="180"
+          height="63"
+        />
+      </div>
+      <a class="ghost-link results-link" href="./resultados">Ver respuestas</a>
+    </header>
+
+    <main class="report-main">
+      <section class="report-hero">
+        <p class="eyebrow">Formato rápido de cierre</p>
+        <h1>Reporte de Resultados – Activación BTL</h1>
+        <p class="lede">
+          Completa los campos y casillas del reporte. Tus respuestas se guardan
+          aparte de la
+          <a href="https://lawngreen-guanaco-656732.hostingersite.com/" target="_blank" rel="noopener">encuesta de satisfacción</a>.
+        </p>
+      </section>
+
+      <form id="reportForm" class="report-form" novalidate>
+        <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+        <section class="card-section">
+          <header class="section-head">
+            <span>1</span>
+            <h2>Datos generales</h2>
+          </header>
+          <div class="grid-2">
+            <label class="field">
+              <span>Fecha</span>
+              <input type="date" name="fecha" required />
+            </label>
+            <label class="field">
+              <span>Punto de venta</span>
+              <input type="text" name="puntoDeVenta" placeholder="Nombre del PDV" required />
+            </label>
+            <label class="field">
+              <span>Clave YAAVSER</span>
+              <input type="text" name="claveYaavser" placeholder="Ej. 25CL03636F32" required />
+            </label>
+            <label class="field">
+              <span>Responsable</span>
+              <input type="text" name="responsable" placeholder="Nombre del responsable" required />
+            </label>
+            <label class="field">
+              <span>Promotor(es)</span>
+              <input type="text" name="promotores" placeholder="Nombres" />
+            </label>
+            <div class="field field-split">
+              <span>Horario</span>
+              <div class="split-inputs">
+                <input type="time" name="horarioInicio" aria-label="Hora inicio" />
+                <span class="split-sep">a</span>
+                <input type="time" name="horarioFin" aria-label="Hora fin" />
+              </div>
+            </div>
+            <label class="field">
+              <span>Ubicación</span>
+              <input type="text" name="ubicacion" placeholder="Ciudad / zona" />
+            </label>
+            <label class="field">
+              <span>Promoción principal</span>
+              <input type="text" name="promocionPrincipal" placeholder="Promoción del día" />
+            </label>
+          </div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head">
+            <span>2</span>
+            <h2>Resumen de resultados</h2>
+          </header>
+          <div class="grid-3 metrics-grid">
+            <label class="field"><span>Abordados</span><input type="number" min="0" name="abordados" /></label>
+            <label class="field"><span>Prospectos</span><input type="number" min="0" name="prospectos" /></label>
+            <label class="field"><span>Ventas</span><input type="number" min="0" name="ventas" /></label>
+            <label class="field"><span>Dinámicas</span><input type="number" min="0" name="dinamicas" /></label>
+            <label class="field"><span>Participantes</span><input type="number" min="0" name="participantes" /></label>
+            <label class="field"><span>Promocionales</span><input type="number" min="0" name="promocionales" /></label>
+          </div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head">
+            <span>3</span>
+            <h2>Indicadores</h2>
+          </header>
+          <div class="grid-2">
+            <label class="field"><span>Tasa de interés %</span><input type="number" min="0" step="0.1" name="tasaInteres" /></label>
+            <label class="field"><span>Tasa de conversión %</span><input type="number" min="0" step="0.1" name="tasaConversion" /></label>
+            <label class="field"><span>Promedio ventas/hora</span><input type="number" min="0" step="0.1" name="promedioVentasHora" /></label>
+            <label class="field"><span>Total dinámicas</span><input type="number" min="0" name="totalDinamicas" /></label>
+          </div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head">
+            <span>4</span>
+            <h2>Resultados comerciales</h2>
+          </header>
+          <div class="table-wrap">
+            <table class="data-table" id="comercialTable">
+              <thead>
+                <tr>
+                  <th>Servicio promovido</th>
+                  <th>Interesados</th>
+                  <th>Operaciones</th>
+                  <th>Principal motivo de no cierre</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head">
+            <span>5</span>
+            <h2>Material promocional</h2>
+          </header>
+          <div class="table-wrap">
+            <table class="data-table" id="materialTable">
+              <thead>
+                <tr>
+                  <th>Material</th>
+                  <th>Inicial</th>
+                  <th>Entregado</th>
+                  <th>Final</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+              <tfoot>
+                <tr>
+                  <th>TOTALES</th>
+                  <th id="matIniTotal">0</th>
+                  <th id="matEntTotal">0</th>
+                  <th id="matFinTotal">0</th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head">
+            <span>6</span>
+            <h2>Incidencias y evidencia</h2>
+          </header>
+          <div class="table-wrap">
+            <table class="data-table" id="incidenciaTable">
+              <thead>
+                <tr>
+                  <th>Incidencia</th>
+                  <th>Sí / No</th>
+                  <th>Descripción breve</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <fieldset class="evidence-box">
+            <legend>Evidencia fotográfica / video</legend>
+            <div class="check-grid" id="evidenciaChecks"></div>
+          </fieldset>
+
+          <label class="field">
+            <span>Observaciones</span>
+            <textarea name="observaciones" rows="3" placeholder="Notas adicionales del cierre…"></textarea>
+          </label>
+        </section>
+
+        <div class="form-actions">
+          <p class="form-hint" id="formHint"></p>
+          <button type="submit" class="btn-primary" id="submitBtn">Enviar reporte</button>
+        </div>
+      </form>
+
+      <section class="success-panel" id="successPanel" hidden>
+        <h2>Reporte enviado</h2>
+        <p>Quedó guardado en las respuestas del reporte BTL.</p>
+        <div class="success-actions">
+          <button type="button" class="btn-primary" id="anotherBtn">Enviar otro</button>
+          <a class="ghost-link" href="./resultados">Ver respuestas</a>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+    <script src="./config.js?v=20260811r1"></script>
+    <script src="./app.js?v=20260811r1" defer></script>
+  </body>
+</html>

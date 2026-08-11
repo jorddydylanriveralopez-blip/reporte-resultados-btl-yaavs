@@ -1,0 +1,248 @@
+name: Deploy to Hostinger
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "README.md"
+      - ".gitignore"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Pack source archive
+        run: |
+          STAMP=$(date -u +%Y%m%d_%H%M%S)
+          ARCHIVE="reporte-resultados-btl-yaavs_${STAMP}.zip"
+          zip -r "$ARCHIVE" . \
+            -x "node_modules/*" \
+            -x ".git/*" \
+            -x "data/responses.json" \
+            -x ".env" \
+            -x ".env.*" \
+            -x ".DS_Store" \
+            -x "*.zip" \
+            -x ".github/*"
+          echo "ARCHIVE=$ARCHIVE" >> "$GITHUB_ENV"
+          ls -lh "$ARCHIVE"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install upload deps
+        run: npm install --no-save axios form-data tus-js-client
+
+      - name: Upload archive and trigger Node build
+        env:
+          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+          HOSTINGER_USERNAME: ${{ secrets.HOSTINGER_USERNAME }}
+          HOSTINGER_DOMAIN: ${{ secrets.HOSTINGER_DOMAIN }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const axios = require('axios');
+          const FormData = require('form-data');
+          const tus = require('tus-js-client');
+
+          const TOKEN = process.env.HOSTINGER_API_TOKEN;
+          const USERNAME = process.env.HOSTINGER_USERNAME || 'u376360150';
+          const DOMAIN = process.env.HOSTINGER_DOMAIN || 'lightslategrey-deer-478072.hostingersite.com';
+          const ARCHIVE = process.env.ARCHIVE;
+          const BASE = 'https://developers.hostinger.com';
+          const headers = {
+            Authorization: `Bearer ${TOKEN}`,
+            Accept: 'application/json',
+            'User-Agent': 'github-actions-hostinger-deploy/1.1',
+          };
+
+          function sleep(ms) {
+            return new Promise((r) => setTimeout(r, ms));
+          }
+
+          async function withRetry(fn, label, attempts = 5) {
+            let last;
+            for (let i = 0; i < attempts; i++) {
+              try {
+                return await fn();
+              } catch (e) {
+                last = e;
+                const detail = e.response?.data || e.message;
+                console.error(`${label} attempt ${i + 1} failed:`, e.response?.status || '', detail);
+                await sleep(2000 * (i + 1));
+              }
+            }
+            throw last;
+          }
+
+          async function deployFromArchive() {
+            const form = new FormData();
+            form.append('archive', fs.createReadStream(ARCHIVE), {
+              filename: path.basename(ARCHIVE),
+              contentType: 'application/zip',
+            });
+            form.append('app_type', 'express');
+            form.append('entry_file', 'server.js');
+            form.append('node_version', '22');
+            form.append('package_manager', 'npm');
+            form.append('build_script', 'build');
+
+            const url = `${BASE}/api/hosting/v1/accounts/${USERNAME}/websites/${DOMAIN}/nodejs/builds/from-archive`;
+            const res = await axios.post(url, form, {
+              headers: { ...headers, ...form.getHeaders() },
+              timeout: 300000,
+              maxContentLength: Infinity,
+              maxBodyLength: Infinity,
+              validateStatus: () => true,
+            });
+            console.log('from-archive status', res.status);
+            if (res.status >= 200 && res.status < 300) return res.data;
+            throw Object.assign(new Error('from-archive failed'), { response: res });
+          }
+
+          async function uploadViaTus() {
+            const credsRes = await axios.post(
+              `${BASE}/api/hosting/v1/files/upload-urls`,
+              { username: USERNAME, domain: DOMAIN },
+              {
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                validateStatus: () => true,
+              }
+            );
+            console.log('upload-urls status', credsRes.status);
+            if (credsRes.status !== 200) {
+              throw Object.assign(new Error('upload-urls failed'), { response: credsRes });
+            }
+            const creds = credsRes.data;
+            const relativePath = path.basename(ARCHIVE);
+            const stats = fs.statSync(ARCHIVE);
+            const uploadUrlWithFile = `${creds.url.replace(/\/$/, '')}/${relativePath}?override=true`;
+            const requestHeaders = {
+              'X-Auth': creds.auth_key,
+              'X-Auth-Rest': creds.rest_auth_key,
+              'upload-length': String(stats.size),
+              'upload-offset': '0',
+            };
+            await axios.post(uploadUrlWithFile, '', {
+              headers: requestHeaders,
+              timeout: 60000,
+              validateStatus: (s) => s === 201,
+            });
+            await new Promise((resolve, reject) => {
+              const upload = new tus.Upload(fs.createReadStream(ARCHIVE), {
+                uploadUrl: uploadUrlWithFile,
+                retryDelays: [1000, 2000, 4000, 8000],
+                uploadDataDuringCreation: false,
+                parallelUploads: 1,
+                chunkSize: 10485760,
+                headers: requestHeaders,
+                removeFingerprintOnSuccess: true,
+                uploadSize: stats.size,
+                metadata: { filename: relativePath },
+                onError: reject,
+                onProgress: (sent, total) => console.log(`progress ${sent}/${total}`),
+                onSuccess: () => resolve(),
+              });
+              upload.start();
+            });
+
+            let settings = {
+              node_version: 22,
+              app_type: 'express',
+              entry_file: 'server.js',
+              package_manager: 'npm',
+              build_script: 'build',
+            };
+            try {
+              const settingsUrl = `${BASE}/api/hosting/v1/accounts/${USERNAME}/websites/${DOMAIN}/nodejs/builds/settings/from-archive?archive_path=${encodeURIComponent(relativePath)}`;
+              settings = (await axios.get(settingsUrl, { headers })).data;
+              console.log('settings', JSON.stringify(settings));
+            } catch (e) {
+              console.log('settings fallback', e.response?.status || e.message);
+            }
+
+            const buildRes = await axios.post(
+              `${BASE}/api/hosting/v1/accounts/${USERNAME}/websites/${DOMAIN}/nodejs/builds`,
+              {
+                ...settings,
+                node_version: 22,
+                app_type: 'express',
+                entry_file: 'server.js',
+                package_manager: 'npm',
+                source_type: 'archive',
+                source_options: { archive_path: relativePath },
+              },
+              {
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                validateStatus: () => true,
+              }
+            );
+            console.log('build status', buildRes.status, JSON.stringify(buildRes.data).slice(0, 500));
+            if (buildRes.status !== 200) {
+              throw Object.assign(new Error('build trigger failed'), { response: buildRes });
+            }
+            return buildRes.data;
+          }
+
+          async function poll(uuid) {
+            for (let i = 0; i < 60; i++) {
+              await sleep(5000);
+              const list = (
+                await axios.get(
+                  `${BASE}/api/hosting/v1/accounts/${USERNAME}/websites/${DOMAIN}/nodejs/builds?per_page=5`,
+                  { headers }
+                )
+              ).data;
+              const latest = list.data?.[0];
+              const state = String(latest?.state || '').toLowerCase();
+              uuid = latest?.uuid || uuid;
+              console.log(`poll ${i + 1}`, state, uuid);
+              if (['completed', 'success', 'succeeded'].includes(state)) {
+                console.log('SUCCESS');
+                console.log(`LIVE_URL=https://${DOMAIN}/`);
+                console.log(`RESULTADOS=https://${DOMAIN}/resultados`);
+                return;
+              }
+              if (['failed', 'error'].includes(state)) {
+                try {
+                  const logs = (
+                    await axios.get(
+                      `${BASE}/api/hosting/v1/accounts/${USERNAME}/websites/${DOMAIN}/nodejs/builds/${uuid}/logs?from_line=0`,
+                      { headers, validateStatus: () => true }
+                    )
+                  ).data;
+                  console.error('LOGS', JSON.stringify(logs).slice(0, 5000));
+                } catch (_) {}
+                throw new Error(`Build failed state=${state}`);
+              }
+            }
+            throw new Error('Build timed out');
+          }
+
+          (async () => {
+            if (!TOKEN) throw new Error('HOSTINGER_API_TOKEN missing');
+            if (!ARCHIVE || !fs.existsSync(ARCHIVE)) throw new Error('ARCHIVE missing');
+            console.log('domain length', DOMAIN.length, 'user length', USERNAME.length, 'archive', ARCHIVE, 'token length', TOKEN.length);
+
+            let build;
+            try {
+              build = await withRetry(deployFromArchive, 'from-archive', 3);
+              console.log('from-archive ok', JSON.stringify(build).slice(0, 800));
+            } catch (e) {
+              console.error('from-archive path failed, trying TUS');
+              build = await withRetry(uploadViaTus, 'tus', 4);
+            }
+
+            await poll(build?.uuid || build?.data?.uuid);
+          })().catch((e) => {
+            console.error('DEPLOY_FAILED', e.response?.status, e.response?.data || e.message);
+            process.exit(1);
+          });
+          NODE

@@ -1,0 +1,19 @@
+{
+  "name": "reporte-resultados-btl-yaavs",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Reporte de Resultados – Activación BTL YAAVS",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "build": "node -e \"console.log('No build step')\""
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "express": "^5.1.0"
+  }
+}
