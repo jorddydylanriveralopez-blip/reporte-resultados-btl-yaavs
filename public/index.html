@@ -4,6 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#eef4fa" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta
       name="description"
       content="Reporte de Resultados – Activación BTL YAAVS. Formato rápido de cierre."
@@ -16,8 +18,8 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles-base.css?v=20260811r4" />
-    <link rel="stylesheet" href="./reporte.css?v=20260811r4" />
+    <link rel="stylesheet" href="./styles-base.css?v=20260811r5" />
+    <link rel="stylesheet" href="./reporte.css?v=20260811r5" />
   </head>
   <body class="report-body">
     <div class="atmosphere" aria-hidden="true">
@@ -43,7 +45,8 @@
         <p class="eyebrow">Formato rápido de cierre</p>
         <h1>Reporte de Resultados – Activación BTL</h1>
         <p class="lede">
-          Completa los campos y casillas del reporte. Tus respuestas se guardan
+          Completa <strong>todo</strong> el reporte (campos, tablas y evidencias).
+          Los campos con <span class="req">*</span> son obligatorios. Tus respuestas se guardan
           aparte de la
           <a href="https://lawngreen-guanaco-656732.hostingersite.com/" target="_blank" rel="noopener">encuesta de satisfacción</a>.
         </p>
@@ -59,40 +62,40 @@
           </header>
           <div class="grid-2">
             <label class="field">
-              <span>Fecha</span>
+              <span>Fecha <span class="req">*</span></span>
               <input type="date" name="fecha" required />
             </label>
             <label class="field">
-              <span>Punto de venta</span>
-              <input type="text" name="puntoDeVenta" placeholder="Nombre del PDV" required />
+              <span>Punto de venta <span class="req">*</span></span>
+              <input type="text" name="puntoDeVenta" placeholder="Nombre del PDV" required autocomplete="organization" />
             </label>
             <label class="field">
-              <span>Clave YAAVSER</span>
-              <input type="text" name="claveYaavser" placeholder="Ej. 25CL03636F32" required />
+              <span>Clave YAAVSER <span class="req">*</span></span>
+              <input type="text" name="claveYaavser" placeholder="Ej. 25CL03636F32" required autocomplete="off" />
             </label>
             <label class="field">
-              <span>Responsable</span>
-              <input type="text" name="responsable" placeholder="Nombre del responsable" required />
+              <span>Responsable <span class="req">*</span></span>
+              <input type="text" name="responsable" placeholder="Nombre del responsable" required autocomplete="name" />
             </label>
             <label class="field">
-              <span>Promotor(es)</span>
-              <input type="text" name="promotores" placeholder="Nombres" />
+              <span>Promotor(es) <span class="req">*</span></span>
+              <input type="text" name="promotores" placeholder="Nombres" required />
             </label>
             <div class="field field-split">
-              <span>Horario</span>
+              <span>Horario <span class="req">*</span></span>
               <div class="split-inputs">
-                <input type="time" name="horarioInicio" aria-label="Hora inicio" />
+                <input type="time" name="horarioInicio" aria-label="Hora inicio" required />
                 <span class="split-sep">a</span>
-                <input type="time" name="horarioFin" aria-label="Hora fin" />
+                <input type="time" name="horarioFin" aria-label="Hora fin" required />
               </div>
             </div>
             <label class="field">
-              <span>Ubicación</span>
-              <input type="text" name="ubicacion" placeholder="Ciudad / zona" />
+              <span>Ubicación <span class="req">*</span></span>
+              <input type="text" name="ubicacion" placeholder="Ciudad / zona" required />
             </label>
             <label class="field">
-              <span>Promoción principal</span>
-              <input type="text" name="promocionPrincipal" placeholder="Promoción del día" />
+              <span>Promoción principal <span class="req">*</span></span>
+              <input type="text" name="promocionPrincipal" placeholder="Promoción del día" required />
             </label>
           </div>
         </section>
@@ -103,12 +106,12 @@
             <h2>Resumen de resultados</h2>
           </header>
           <div class="grid-3 metrics-grid">
-            <label class="field"><span>Abordados</span><input type="number" min="0" name="abordados" /></label>
-            <label class="field"><span>Prospectos</span><input type="number" min="0" name="prospectos" /></label>
-            <label class="field"><span>Ventas</span><input type="number" min="0" name="ventas" /></label>
-            <label class="field"><span>Dinámicas</span><input type="number" min="0" name="dinamicas" /></label>
-            <label class="field"><span>Participantes</span><input type="number" min="0" name="participantes" /></label>
-            <label class="field"><span>Promocionales</span><input type="number" min="0" name="promocionales" /></label>
+            <label class="field"><span>Abordados <span class="req">*</span></span><input type="number" min="0" inputmode="numeric" name="abordados" required /></label>
+            <label class="field"><span>Prospectos <span class="req">*</span></span><input type="number" min="0" inputmode="numeric" name="prospectos" required /></label>
+            <label class="field"><span>Ventas <span class="req">*</span></span><input type="number" min="0" inputmode="numeric" name="ventas" required /></label>
+            <label class="field"><span>Dinámicas <span class="req">*</span></span><input type="number" min="0" inputmode="numeric" name="dinamicas" required /></label>
+            <label class="field"><span>Participantes <span class="req">*</span></span><input type="number" min="0" inputmode="numeric" name="participantes" required /></label>
+            <label class="field"><span>Promocionales <span class="req">*</span></span><input type="number" min="0" inputmode="numeric" name="promocionales" required /></label>
           </div>
         </section>
 
@@ -118,20 +121,21 @@
             <h2>Indicadores</h2>
           </header>
           <div class="grid-2">
-            <label class="field"><span>Tasa de interés %</span><input type="number" min="0" step="0.1" name="tasaInteres" /></label>
-            <label class="field"><span>Tasa de conversión %</span><input type="number" min="0" step="0.1" name="tasaConversion" /></label>
-            <label class="field"><span>Promedio ventas/hora</span><input type="number" min="0" step="0.1" name="promedioVentasHora" /></label>
-            <label class="field"><span>Total dinámicas</span><input type="number" min="0" name="totalDinamicas" /></label>
+            <label class="field"><span>Tasa de interés % <span class="req">*</span></span><input type="number" min="0" step="0.1" inputmode="decimal" name="tasaInteres" required /></label>
+            <label class="field"><span>Tasa de conversión % <span class="req">*</span></span><input type="number" min="0" step="0.1" inputmode="decimal" name="tasaConversion" required /></label>
+            <label class="field"><span>Promedio ventas/hora <span class="req">*</span></span><input type="number" min="0" step="0.1" inputmode="decimal" name="promedioVentasHora" required /></label>
+            <label class="field"><span>Total dinámicas <span class="req">*</span></span><input type="number" min="0" inputmode="numeric" name="totalDinamicas" required /></label>
           </div>
         </section>
 
         <section class="card-section">
           <header class="section-head">
             <span>4</span>
-            <h2>Resultados comerciales</h2>
+            <h2>Resultados comerciales <span class="req">*</span></h2>
           </header>
+          <p class="section-note">Completa interesados, operaciones y motivo en cada servicio (puedes poner 0).</p>
           <div class="table-wrap">
-            <table class="data-table" id="comercialTable">
+            <table class="data-table stack-on-mobile" id="comercialTable">
               <thead>
                 <tr>
                   <th>Servicio promovido</th>
@@ -148,10 +152,11 @@
         <section class="card-section">
           <header class="section-head">
             <span>5</span>
-            <h2>Material promocional</h2>
+            <h2>Material promocional <span class="req">*</span></h2>
           </header>
+          <p class="section-note">Indica cuántas piezas tienes de cada material en este momento (puedes poner 0).</p>
           <div class="table-wrap">
-            <table class="data-table" id="materialTable">
+            <table class="data-table stack-on-mobile" id="materialTable">
               <thead>
                 <tr>
                   <th>Material</th>
@@ -162,7 +167,7 @@
               <tfoot>
                 <tr>
                   <th>TOTALES</th>
-                  <th id="matCantTotal">0</th>
+                  <th id="matCantTotal" data-label="Total">0</th>
                 </tr>
               </tfoot>
             </table>
@@ -172,10 +177,11 @@
         <section class="card-section">
           <header class="section-head">
             <span>6</span>
-            <h2>Incidencias y evidencia</h2>
+            <h2>Incidencias y evidencia <span class="req">*</span></h2>
           </header>
+          <p class="section-note">Responde Sí/No, describe cada incidencia y sube al menos un archivo por punto de evidencia.</p>
           <div class="table-wrap">
-            <table class="data-table" id="incidenciaTable">
+            <table class="data-table stack-on-mobile" id="incidenciaTable">
               <thead>
                 <tr>
                   <th>Incidencia</th>
@@ -188,16 +194,16 @@
           </div>
 
           <fieldset class="evidence-box">
-            <legend>Evidencia fotográfica / documentos</legend>
+            <legend>Evidencia fotográfica / documentos <span class="req">*</span></legend>
             <p class="evidence-help">
-              Sube cualquier archivo por punto (fotos, video, PDF, Word, Excel, ZIP, etc.). Puedes elegir varios por punto.
+              Sube al menos un archivo por punto (fotos, video, PDF, Word, Excel, ZIP, etc.).
             </p>
             <div class="evidence-upload-grid" id="evidenciaUploads"></div>
           </fieldset>
 
           <label class="field">
-            <span>Observaciones</span>
-            <textarea name="observaciones" rows="3" placeholder="Notas adicionales del cierre…"></textarea>
+            <span>Observaciones <span class="req">*</span></span>
+            <textarea name="observaciones" rows="3" placeholder="Notas adicionales del cierre… (si no hay, escribe Ninguna)" required></textarea>
           </label>
         </section>
 
@@ -219,7 +225,7 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-    <script src="./config.js?v=20260811r4"></script>
-    <script src="./app.js?v=20260811r4" defer></script>
+    <script src="./config.js?v=20260811r5"></script>
+    <script src="./app.js?v=20260811r5" defer></script>
   </body>
 </html>

@@ -25,7 +25,42 @@
     window.clearTimeout(showToast._t);
     showToast._t = window.setTimeout(() => {
       toast.hidden = true;
-    }, 2600);
+    }, 3200);
+  }
+
+  function isBlank(v) {
+    return v == null || String(v).trim() === "";
+  }
+
+  function clearInvalid() {
+    form.querySelectorAll(".is-invalid").forEach((el) => el.classList.remove("is-invalid"));
+    form.querySelectorAll(".evidence-card.is-invalid").forEach((el) =>
+      el.classList.remove("is-invalid"),
+    );
+  }
+
+  function markInvalid(el) {
+    if (!el) return;
+    el.classList.add("is-invalid");
+    const card = el.closest(".evidence-card");
+    if (card) card.classList.add("is-invalid");
+  }
+
+  function focusFirstInvalid() {
+    const el =
+      form.querySelector(".is-invalid input, .is-invalid textarea, input.is-invalid, textarea.is-invalid") ||
+      form.querySelector(".evidence-card.is-invalid .evidence-pick-btn") ||
+      form.querySelector(".is-invalid");
+    if (!el) return;
+    const target = el.closest(".card-section") || el;
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (typeof el.focus === "function") {
+      try {
+        el.focus({ preventScroll: true });
+      } catch (_) {
+        el.focus();
+      }
+    }
   }
 
   function fillComercial() {
@@ -34,10 +69,16 @@
       .map(
         (name) => `
       <tr data-servicio="${escapeAttr(name)}">
-        <td class="row-label">${escapeHtml(name)}</td>
-        <td><input type="number" min="0" data-k="interesados" aria-label="Interesados ${escapeAttr(name)}" /></td>
-        <td><input type="number" min="0" data-k="operaciones" aria-label="Operaciones ${escapeAttr(name)}" /></td>
-        <td><input type="text" data-k="motivo" placeholder="Motivo" aria-label="Motivo ${escapeAttr(name)}" /></td>
+        <td class="row-label" data-label="Servicio">${escapeHtml(name)}</td>
+        <td data-label="Interesados">
+          <input type="number" min="0" inputmode="numeric" required data-k="interesados" aria-label="Interesados ${escapeAttr(name)}" />
+        </td>
+        <td data-label="Operaciones">
+          <input type="number" min="0" inputmode="numeric" required data-k="operaciones" aria-label="Operaciones ${escapeAttr(name)}" />
+        </td>
+        <td data-label="Motivo de no cierre">
+          <input type="text" required data-k="motivo" placeholder="Motivo" aria-label="Motivo ${escapeAttr(name)}" />
+        </td>
       </tr>`,
       )
       .join("");
@@ -49,8 +90,10 @@
       .map(
         (name) => `
       <tr data-material="${escapeAttr(name)}">
-        <td class="row-label">${escapeHtml(name)}</td>
-        <td><input type="number" min="0" class="mat-cant" data-k="cantidad" aria-label="¿Cuántas tenemos en este momento? ${escapeAttr(name)}" /></td>
+        <td class="row-label" data-label="Material">${escapeHtml(name)}</td>
+        <td data-label="¿Cuántas tenemos en este momento?">
+          <input type="number" min="0" inputmode="numeric" required class="mat-cant" data-k="cantidad" aria-label="¿Cuántas tenemos en este momento? ${escapeAttr(name)}" />
+        </td>
       </tr>`,
       )
       .join("");
@@ -74,14 +117,16 @@
       .map(
         (name, i) => `
       <tr data-incidencia="${escapeAttr(name)}">
-        <td class="row-label">${escapeHtml(name)}</td>
-        <td>
-          <div class="yesno">
-            <label><input type="radio" name="inc_${i}" value="Sí" /> Sí</label>
-            <label><input type="radio" name="inc_${i}" value="No" /> No</label>
+        <td class="row-label" data-label="Incidencia">${escapeHtml(name)}</td>
+        <td data-label="Sí / No">
+          <div class="yesno" role="radiogroup" aria-label="${escapeAttr(name)}">
+            <label><input type="radio" name="inc_${i}" value="Sí" required /> Sí</label>
+            <label><input type="radio" name="inc_${i}" value="No" required /> No</label>
           </div>
         </td>
-        <td><input type="text" data-k="descripcion" placeholder="Descripción breve" /></td>
+        <td data-label="Descripción breve">
+          <input type="text" required data-k="descripcion" placeholder="Descripción breve" aria-label="Descripción ${escapeAttr(name)}" />
+        </td>
       </tr>`,
       )
       .join("");
@@ -100,7 +145,7 @@
         return `
       <div class="evidence-card" data-idx="${i}">
         <div class="evidence-card-head">
-          <strong>${escapeHtml(name)}</strong>
+          <strong>${escapeHtml(name)} <span class="req" aria-hidden="true">*</span></strong>
           <span class="evidence-count" id="ev_count_${i}">0 archivos</span>
         </div>
         <label class="evidence-pick" for="ev_file_${i}">
@@ -112,7 +157,7 @@
             hidden
           />
           <span class="evidence-pick-btn">Subir evidencia</span>
-          <span class="evidence-pick-hint">Cualquier archivo · máx. ${MAX_FILES_PER_POINT} · ${MAX_FILE_MB} MB c/u</span>
+          <span class="evidence-pick-hint">Obligatorio · cualquier archivo · máx. ${MAX_FILES_PER_POINT} · ${MAX_FILE_MB} MB c/u</span>
         </label>
         <div class="evidence-previews" id="ev_prev_${i}"></div>
       </div>`;
@@ -144,6 +189,8 @@
     }
 
     selectedFiles[idx] = next;
+    const card = document.querySelector(`.evidence-card[data-idx="${idx}"]`);
+    if (next.length) card?.classList.remove("is-invalid");
     renderPreviews(idx);
   }
 
@@ -255,10 +302,87 @@
   }
 
   function validate(answers) {
-    if (!answers.fecha) return "Captura la fecha de la activación.";
-    if (!answers.puntoDeVenta) return "Captura el punto de venta.";
-    if (!answers.claveYaavser) return "Captura la clave YAAVSER.";
-    if (!answers.responsable) return "Captura el responsable.";
+    clearInvalid();
+
+    const requiredText = [
+      ["fecha", "fecha", "Captura la fecha de la activación."],
+      ["puntoDeVenta", "puntoDeVenta", "Captura el punto de venta."],
+      ["claveYaavser", "claveYaavser", "Captura la clave YAAVSER."],
+      ["responsable", "responsable", "Captura el responsable."],
+      ["promotores", "promotores", "Captura el/los promotor(es)."],
+      ["horarioInicio", "horarioInicio", "Captura la hora de inicio."],
+      ["horarioFin", "horarioFin", "Captura la hora de fin."],
+      ["ubicacion", "ubicacion", "Captura la ubicación."],
+      ["promocionPrincipal", "promocionPrincipal", "Captura la promoción principal."],
+      ["abordados", "abordados", "Captura el número de abordados (puedes poner 0)."],
+      ["prospectos", "prospectos", "Captura el número de prospectos (puedes poner 0)."],
+      ["ventas", "ventas", "Captura el número de ventas (puedes poner 0)."],
+      ["dinamicas", "dinamicas", "Captura el número de dinámicas (puedes poner 0)."],
+      ["participantes", "participantes", "Captura el número de participantes (puedes poner 0)."],
+      ["promocionales", "promocionales", "Captura el número de promocionales (puedes poner 0)."],
+      ["tasaInteres", "tasaInteres", "Captura la tasa de interés % (puedes poner 0)."],
+      ["tasaConversion", "tasaConversion", "Captura la tasa de conversión % (puedes poner 0)."],
+      ["promedioVentasHora", "promedioVentasHora", "Captura el promedio de ventas/hora (puedes poner 0)."],
+      ["totalDinamicas", "totalDinamicas", "Captura el total de dinámicas (puedes poner 0)."],
+      ["observaciones", "observaciones", "Captura las observaciones (si no hay, escribe “Ninguna”)."],
+    ];
+
+    for (const [key, name, msg] of requiredText) {
+      if (isBlank(answers[key])) {
+        const el = form.elements.namedItem(name);
+        markInvalid(el);
+        return msg;
+      }
+    }
+
+    for (const row of answers.comerciales) {
+      const tr = [...document.querySelectorAll("#comercialTable tbody tr")].find(
+        (el) => el.dataset.servicio === row.servicio,
+      );
+      if (isBlank(row.interesados)) {
+        markInvalid(tr?.querySelector('[data-k="interesados"]'));
+        return `En resultados comerciales, captura interesados de “${row.servicio}” (puedes poner 0).`;
+      }
+      if (isBlank(row.operaciones)) {
+        markInvalid(tr?.querySelector('[data-k="operaciones"]'));
+        return `En resultados comerciales, captura operaciones de “${row.servicio}” (puedes poner 0).`;
+      }
+      if (isBlank(row.motivo)) {
+        markInvalid(tr?.querySelector('[data-k="motivo"]'));
+        return `En resultados comerciales, captura el motivo de “${row.servicio}”.`;
+      }
+    }
+
+    for (const row of answers.materiales) {
+      const tr = [...document.querySelectorAll("#materialTable tbody tr")].find(
+        (el) => el.dataset.material === row.material,
+      );
+      if (isBlank(row.cantidad)) {
+        markInvalid(tr?.querySelector('[data-k="cantidad"]'));
+        return `En material promocional, indica cuántas “${row.material}” tienes ahora (puedes poner 0).`;
+      }
+    }
+
+    for (let i = 0; i < answers.incidencias.length; i++) {
+      const row = answers.incidencias[i];
+      const tr = document.querySelectorAll("#incidenciaTable tbody tr")[i];
+      if (isBlank(row.siNo)) {
+        markInvalid(tr?.querySelector(".yesno"));
+        return `En incidencias, responde Sí/No en “${row.incidencia}”.`;
+      }
+      if (isBlank(row.descripcion)) {
+        markInvalid(tr?.querySelector('[data-k="descripcion"]'));
+        return `En incidencias, escribe la descripción de “${row.incidencia}” (si no aplica, “Ninguna”).`;
+      }
+    }
+
+    for (let i = 0; i < evidencia.length; i++) {
+      if (!(selectedFiles[i] || []).length) {
+        markInvalid(document.querySelector(`.evidence-card[data-idx="${i}"]`));
+        return `Sube al menos un archivo de evidencia en “${evidencia[i]}”.`;
+      }
+    }
+
     return "";
   }
 
@@ -269,6 +393,18 @@
     });
   }
 
+  form.addEventListener("input", (e) => {
+    const t = e.target;
+    if (t && t.classList) t.classList.remove("is-invalid");
+    t?.closest?.(".yesno")?.classList.remove("is-invalid");
+  });
+
+  form.addEventListener("change", (e) => {
+    const t = e.target;
+    if (t && t.classList) t.classList.remove("is-invalid");
+    t?.closest?.(".yesno")?.classList.remove("is-invalid");
+  });
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     hint.textContent = "";
@@ -277,6 +413,7 @@
     if (err) {
       hint.textContent = err;
       showToast(err);
+      focusFirstInvalid();
       return;
     }
 
@@ -316,6 +453,7 @@
 
   document.getElementById("anotherBtn")?.addEventListener("click", () => {
     form.reset();
+    clearInvalid();
     resetEvidence();
     updateMaterialTotals();
     successPanel.hidden = true;
