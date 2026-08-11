@@ -67,14 +67,25 @@
                   .map((f) => {
                     const url = escapeAttr(f.url || "");
                     const name = escapeHtml(f.name || "archivo");
-                    if (String(f.mime || "").startsWith("video/")) {
+                    const mime = String(f.mime || "");
+                    if (mime.startsWith("video/")) {
                       return `<a class="evidence-item video" href="${url}" target="_blank" rel="noopener">
                         <video src="${url}" muted playsinline></video>
                         <span>${name}</span>
                       </a>`;
                     }
-                    return `<a class="evidence-item" href="${url}" target="_blank" rel="noopener">
-                      <img src="${url}" alt="${name}" loading="lazy" />
+                    if (mime.startsWith("image/")) {
+                      return `<a class="evidence-item" href="${url}" target="_blank" rel="noopener">
+                        <img src="${url}" alt="${name}" loading="lazy" />
+                        <span>${name}</span>
+                      </a>`;
+                    }
+                    const ext = String(f.name || "")
+                      .split(".")
+                      .pop()
+                      ?.toUpperCase() || "FILE";
+                    return `<a class="evidence-item file" href="${url}" target="_blank" rel="noopener" download>
+                      <div class="evidence-file-tile">${escapeHtml(ext)}</div>
                       <span>${name}</span>
                     </a>`;
                   })

@@ -33,16 +33,29 @@ const dataDir = path.join(__dirname, "data");
 const dataFile = path.join(dataDir, "responses.json");
 const uploadsRoot = path.join(dataDir, "uploads");
 const SHEETS_WEBHOOK_URL = String(process.env.SHEETS_WEBHOOK_URL || "").trim();
-const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
-const MAX_FILES = 30;
+const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
+const MAX_FILES = 60;
+
+function safeFilename(name) {
+  const base = path.basename(String(name || "archivo"));
+  return base.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120) || "archivo";
+}
 
 const upload = multer({
-  storage: multer.memoryStorage(),
+  storage: multer.diskStorage({
+    destination(_req, _file, cb) {
+      const tmp = path.join(uploadsRoot, "_tmp");
+      fs.mkdirSync(tmp, { recursive: true });
+      cb(null, tmp);
+    },
+    filename(_req, file, cb) {
+      cb(
+        null,
+        `${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${safeFilename(file.originalname)}`,
+      );
+    },
+  }),
   limits: { fileSize: MAX_UPLOAD_BYTES, files: MAX_FILES },
-  fileFilter(_req, file, cb) {
-    if (/^(image|video)\//.test(file.mimetype)) cb(null, true);
-    else cb(new Error("Solo se permiten imágenes o video."));
-  },
 });
 
 const FIELD_ORDER = [
@@ -112,11 +125,6 @@ function ensureStore() {
   if (!fs.existsSync(dataFile)) fs.writeFileSync(dataFile, "[]", "utf8");
 }
 
-function safeFilename(name) {
-  const base = path.basename(String(name || "archivo"));
-  return base.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120) || "archivo";
-}
-
 function parseSubmitBody(req) {
   const body = { ...(req.body || {}) };
   if (typeof body.answers === "string") {
@@ -143,12 +151,19 @@ function saveEvidenceFiles(entryId, labels, files) {
         ? String(labels[idx])
         : `Punto ${idx + 1}`;
     const fname = `${Date.now()}_${idx}_${safeFilename(file.originalname)}`;
-    fs.writeFileSync(path.join(dest, fname), file.buffer);
+    const target = path.join(dest, fname);
+    if (file.path && fs.existsSync(file.path)) {
+      fs.renameSync(file.path, target);
+    } else if (file.buffer) {
+      fs.writeFileSync(target, file.buffer);
+    } else {
+      continue;
+    }
     const item = {
       name: file.originalname || fname,
       storedAs: fname,
       url: `/uploads/${entryId}/${fname}`,
-      mime: file.mimetype || "",
+      mime: file.mimetype || "application/octet-stream",
       size: file.size || 0,
     };
     if (!byIndex.has(idx)) byIndex.set(idx, { punto, files: [] });

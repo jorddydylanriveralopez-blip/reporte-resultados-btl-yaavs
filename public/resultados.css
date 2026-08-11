@@ -306,6 +306,20 @@ body {
   background: #0f2440;
 }
 
+.evidence-file-tile {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: linear-gradient(145deg, #1a3a5c, #0f2440);
+  color: #9ed7e8;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+}
+
 .evidence-item span {
   white-space: nowrap;
   overflow: hidden;

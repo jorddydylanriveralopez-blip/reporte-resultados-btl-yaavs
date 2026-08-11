@@ -12,8 +12,8 @@
   const incidencias = opts.incidencias || [];
   const evidencia = opts.evidencia || [];
 
-  const MAX_FILES_PER_POINT = 5;
-  const MAX_FILE_MB = 8;
+  const MAX_FILES_PER_POINT = 10;
+  const MAX_FILE_MB = 100;
 
   /** @type {Record<number, File[]>} */
   const selectedFiles = {};
@@ -90,10 +90,9 @@
       .join("");
   }
 
-  function acceptForPoint(name) {
-    const lower = String(name).toLowerCase();
-    if (lower.includes("video")) return "video/*,image/*";
-    return "image/*,video/*";
+  function fileExt(name) {
+    const m = String(name || "").match(/\.([a-z0-9]+)$/i);
+    return m ? m[1].toUpperCase() : "FILE";
   }
 
   function fillEvidencia() {
@@ -111,13 +110,12 @@
           <input
             type="file"
             id="ev_file_${i}"
-            accept="${acceptForPoint(name)}"
+            accept="*/*"
             multiple
-            capture="environment"
             hidden
           />
           <span class="evidence-pick-btn">Subir evidencia</span>
-          <span class="evidence-pick-hint">Fotos o video · máx. ${MAX_FILES_PER_POINT} · ${MAX_FILE_MB} MB c/u</span>
+          <span class="evidence-pick-hint">Cualquier archivo · máx. ${MAX_FILES_PER_POINT} · ${MAX_FILE_MB} MB c/u</span>
         </label>
         <div class="evidence-previews" id="ev_prev_${i}"></div>
       </div>`;
@@ -137,10 +135,6 @@
     const next = [...current];
 
     for (const file of incoming) {
-      if (!/^(image|video)\//.test(file.type)) {
-        showToast("Solo se permiten imágenes o video.");
-        continue;
-      }
       if (file.size > MAX_FILE_MB * 1024 * 1024) {
         showToast(`"${file.name}" supera ${MAX_FILE_MB} MB.`);
         continue;
@@ -170,13 +164,13 @@
       .map((file, fi) => {
         const url = URL.createObjectURL(file);
         const isVideo = file.type.startsWith("video/");
+        const isImage = file.type.startsWith("image/");
+        let media = `<div class="evidence-file-icon" aria-hidden="true">${escapeHtml(fileExt(file.name))}</div>`;
+        if (isVideo) media = `<video src="${url}" muted playsinline></video>`;
+        else if (isImage) media = `<img src="${url}" alt="${escapeAttr(file.name)}" />`;
         return `
         <div class="evidence-thumb" data-fi="${fi}">
-          ${
-            isVideo
-              ? `<video src="${url}" muted playsinline></video>`
-              : `<img src="${url}" alt="${escapeAttr(file.name)}" />`
-          }
+          ${media}
           <button type="button" class="evidence-remove" aria-label="Quitar ${escapeAttr(file.name)}">×</button>
           <span class="evidence-name">${escapeHtml(file.name)}</span>
         </div>`;
