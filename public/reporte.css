@@ -140,7 +140,7 @@
 
 .field input,
 .field textarea,
-.data-table input {
+.data-table input:not([type="radio"]):not([type="checkbox"]) {
   width: 100%;
   border: 1px solid rgba(15, 36, 64, 0.14);
   border-radius: 12px;
@@ -162,14 +162,14 @@
 
 .field input:focus,
 .field textarea:focus,
-.data-table input:focus {
+.data-table input:not([type="radio"]):not([type="checkbox"]):focus {
   border-color: var(--teal);
   box-shadow: 0 0 0 3px rgba(0, 151, 178, 0.14);
 }
 
 .field input.is-invalid,
 .field textarea.is-invalid,
-.data-table input.is-invalid,
+.data-table input:not([type="radio"]):not([type="checkbox"]).is-invalid,
 .yesno.is-invalid,
 .evidence-card.is-invalid {
   border-color: #e07474 !important;
