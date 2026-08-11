@@ -150,8 +150,14 @@
         <td class="row-label" data-label="Incidencia">${escapeHtml(name)}</td>
         <td data-label="Sí / No">
           <div class="yesno" role="radiogroup" aria-label="${escapeAttr(name)}">
-            <label><input type="radio" name="inc_${i}" value="Sí" required /> Sí</label>
-            <label><input type="radio" name="inc_${i}" value="No" required /> No</label>
+            <label class="yesno-opt" for="inc_${i}_si">
+              <input type="radio" id="inc_${i}_si" name="inc_${i}" value="Sí" required />
+              <span>Sí</span>
+            </label>
+            <label class="yesno-opt" for="inc_${i}_no">
+              <input type="radio" id="inc_${i}_no" name="inc_${i}" value="No" required />
+              <span>No</span>
+            </label>
           </div>
         </td>
         <td data-label="Descripción breve">
