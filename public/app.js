@@ -50,9 +50,7 @@
         (name) => `
       <tr data-material="${escapeAttr(name)}">
         <td class="row-label">${escapeHtml(name)}</td>
-        <td><input type="number" min="0" class="mat-ini" data-k="inicial" /></td>
-        <td><input type="number" min="0" class="mat-ent" data-k="entregado" /></td>
-        <td><input type="number" min="0" class="mat-fin" data-k="final" /></td>
+        <td><input type="number" min="0" class="mat-cant" data-k="cantidad" aria-label="¿Cuántas tenemos en este momento? ${escapeAttr(name)}" /></td>
       </tr>`,
       )
       .join("");
@@ -66,9 +64,8 @@
         (acc, el) => acc + (Number(el.value) || 0),
         0,
       );
-    document.getElementById("matIniTotal").textContent = String(sum(".mat-ini"));
-    document.getElementById("matEntTotal").textContent = String(sum(".mat-ent"));
-    document.getElementById("matFinTotal").textContent = String(sum(".mat-fin"));
+    const totalEl = document.getElementById("matCantTotal");
+    if (totalEl) totalEl.textContent = String(sum(".mat-cant"));
   }
 
   function fillIncidencias() {
@@ -212,9 +209,7 @@
   function collectMateriales() {
     return [...document.querySelectorAll("#materialTable tbody tr")].map((tr) => ({
       material: tr.dataset.material,
-      inicial: tr.querySelector('[data-k="inicial"]').value,
-      entregado: tr.querySelector('[data-k="entregado"]').value,
-      final: tr.querySelector('[data-k="final"]').value,
+      cantidad: tr.querySelector('[data-k="cantidad"]').value,
     }));
   }
 

@@ -159,7 +159,7 @@
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 640px;
+  min-width: 480px;
   background: #fff;
 }
 
