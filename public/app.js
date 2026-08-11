@@ -111,7 +111,36 @@
     if (totalEl) totalEl.textContent = String(sum(".mat-cant"));
   }
 
-  function fillIncidencias() {
+  function setIncidenciaDetalleOpen(open) {
+    const panel = document.getElementById("incidenciaDetalle");
+    if (!panel) return;
+    panel.hidden = !open;
+    panel.querySelectorAll("input, textarea").forEach((el) => {
+      if (el.type === "file") return;
+      if (open) el.setAttribute("required", "required");
+      else {
+        el.removeAttribute("required");
+        el.classList.remove("is-invalid");
+      }
+    });
+    if (!open) {
+      panel.querySelectorAll(".yesno, .evidence-card").forEach((el) =>
+        el.classList.remove("is-invalid"),
+      );
+    }
+  }
+
+  function bindHayIncidencia() {
+    const radios = form.querySelectorAll('input[name="hayIncidencia"]');
+    const sync = () => {
+      const checked = form.querySelector('input[name="hayIncidencia"]:checked');
+      const open = checked?.value === "Sí";
+      setIncidenciaDetalleOpen(open);
+      if (!open) resetEvidence();
+    };
+    radios.forEach((r) => r.addEventListener("change", sync));
+    sync();
+  }
     const tbody = document.querySelector("#incidenciaTable tbody");
     tbody.innerHTML = incidencias
       .map(
@@ -293,6 +322,7 @@
       tasaConversion: String(fd.get("tasaConversion") || "").trim(),
       promedioVentasHora: String(fd.get("promedioVentasHora") || "").trim(),
       totalDinamicas: String(fd.get("totalDinamicas") || "").trim(),
+      hayIncidencia: String(fd.get("hayIncidencia") || "").trim(),
       comerciales: collectComerciales(),
       materiales: collectMateriales(),
       incidencias: collectIncidencias(),
@@ -335,6 +365,11 @@
       }
     }
 
+    if (isBlank(answers.hayIncidencia)) {
+      markInvalid(form.querySelector(".gate-yesno"));
+      return "Indica si hay una incidencia (Sí o No).";
+    }
+
     for (const row of answers.comerciales) {
       const tr = [...document.querySelectorAll("#comercialTable tbody tr")].find(
         (el) => el.dataset.servicio === row.servicio,
@@ -363,24 +398,29 @@
       }
     }
 
-    for (let i = 0; i < answers.incidencias.length; i++) {
-      const row = answers.incidencias[i];
-      const tr = document.querySelectorAll("#incidenciaTable tbody tr")[i];
-      if (isBlank(row.siNo)) {
-        markInvalid(tr?.querySelector(".yesno"));
-        return `En incidencias, responde Sí/No en “${row.incidencia}”.`;
+    if (answers.hayIncidencia === "Sí") {
+      for (let i = 0; i < answers.incidencias.length; i++) {
+        const row = answers.incidencias[i];
+        const tr = document.querySelectorAll("#incidenciaTable tbody tr")[i];
+        if (isBlank(row.siNo)) {
+          markInvalid(tr?.querySelector(".yesno"));
+          return `En incidencias, responde Sí/No en “${row.incidencia}”.`;
+        }
+        if (isBlank(row.descripcion)) {
+          markInvalid(tr?.querySelector('[data-k="descripcion"]'));
+          return `En incidencias, escribe la descripción de “${row.incidencia}” (si no aplica, “Ninguna”).`;
+        }
       }
-      if (isBlank(row.descripcion)) {
-        markInvalid(tr?.querySelector('[data-k="descripcion"]'));
-        return `En incidencias, escribe la descripción de “${row.incidencia}” (si no aplica, “Ninguna”).`;
-      }
-    }
 
-    for (let i = 0; i < evidencia.length; i++) {
-      if (!(selectedFiles[i] || []).length) {
-        markInvalid(document.querySelector(`.evidence-card[data-idx="${i}"]`));
-        return `Sube al menos un archivo de evidencia en “${evidencia[i]}”.`;
+      for (let i = 0; i < evidencia.length; i++) {
+        if (!(selectedFiles[i] || []).length) {
+          markInvalid(document.querySelector(`.evidence-card[data-idx="${i}"]`));
+          return `Sube al menos un archivo de evidencia en “${evidencia[i]}”.`;
+        }
       }
+    } else {
+      answers.incidencias = [];
+      answers.evidenciaLabels = [];
     }
 
     return "";
@@ -418,14 +458,21 @@
     }
 
     const payload = new FormData();
-    payload.append("answers", JSON.stringify(answers));
+    const toSend = { ...answers };
+    if (toSend.hayIncidencia !== "Sí") {
+      toSend.incidencias = [];
+      toSend.evidenciaLabels = [];
+    }
+    payload.append("answers", JSON.stringify(toSend));
     payload.append("website", form.website?.value || "");
 
-    evidencia.forEach((_, i) => {
-      (selectedFiles[i] || []).forEach((file) => {
-        payload.append(`ev_${i}`, file, file.name);
+    if (toSend.hayIncidencia === "Sí") {
+      evidencia.forEach((_, i) => {
+        (selectedFiles[i] || []).forEach((file) => {
+          payload.append(`ev_${i}`, file, file.name);
+        });
       });
-    });
+    }
 
     submitBtn.disabled = true;
     submitBtn.textContent = "Enviando…";
@@ -455,6 +502,7 @@
     form.reset();
     clearInvalid();
     resetEvidence();
+    setIncidenciaDetalleOpen(false);
     updateMaterialTotals();
     successPanel.hidden = true;
     form.hidden = false;
@@ -465,5 +513,6 @@
   fillMaterial();
   fillIncidencias();
   fillEvidencia();
+  bindHayIncidencia();
   updateMaterialTotals();
 })();

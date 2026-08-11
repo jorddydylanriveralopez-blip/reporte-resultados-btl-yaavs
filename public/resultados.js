@@ -28,6 +28,7 @@
     totalDinamicas: "Total dinámicas",
     comerciales: "Resultados comerciales",
     materiales: "Material promocional",
+    hayIncidencia: "¿Hay incidencia?",
     incidencias: "Incidencias",
     observaciones: "Observaciones",
   };
