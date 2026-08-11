@@ -374,6 +374,28 @@ app.get("/api/export.csv", (_req, res) => {
   res.send("\uFEFF" + lines.join("\n"));
 });
 
+app.get("/api/health", (_req, res) => {
+  res.json({
+    ok: true,
+    count: readResponses().length,
+    sheetsConfigured: Boolean(SHEETS_WEBHOOK_URL),
+  });
+});
+
+app.post("/api/reset", (req, res) => {
+  try {
+    const key = String(req.body?.key || req.query?.key || "").trim();
+    const expected = String(process.env.RESET_KEY || "yaavs-reset").trim();
+    if (!key || key !== expected) {
+      return res.status(403).json({ ok: false, error: "No autorizado" });
+    }
+    writeResponses([]);
+    res.json({ ok: true, count: 0 });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message || "No se pudo reiniciar" });
+  }
+});
+
 app.get("/resultados", (_req, res) => {
   res.sendFile(path.join(publicDir, "resultados.html"));
 });
