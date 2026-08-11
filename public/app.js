@@ -141,6 +141,8 @@
     radios.forEach((r) => r.addEventListener("change", sync));
     sync();
   }
+
+  function fillIncidencias() {
     const tbody = document.querySelector("#incidenciaTable tbody");
     tbody.innerHTML = incidencias
       .map(
