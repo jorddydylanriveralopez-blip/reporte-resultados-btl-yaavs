@@ -18,8 +18,8 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles-base.css?v=20260811r6" />
-    <link rel="stylesheet" href="./reporte.css?v=20260811r6" />
+    <link rel="stylesheet" href="./styles-base.css?v=20260811r7" />
+    <link rel="stylesheet" href="./reporte.css?v=20260811r7" />
   </head>
   <body class="report-body">
     <div class="atmosphere" aria-hidden="true">
@@ -177,7 +177,7 @@
         <section class="card-section">
           <header class="section-head">
             <span>6</span>
-            <h2>Incidencias y evidencia</h2>
+            <h2>Incidencias</h2>
           </header>
 
           <fieldset class="gate-box">
@@ -190,7 +190,7 @@
 
           <div id="incidenciaDetalle" class="incidencia-detalle" hidden>
             <p class="section-note">
-              Detalla cada incidencia y sube al menos un archivo de evidencia por punto.
+              Detalla cada tipo de incidencia (Sí/No y descripción breve).
             </p>
             <div class="table-wrap">
               <table class="data-table stack-on-mobile" id="incidenciaTable">
@@ -204,17 +204,20 @@
                 <tbody></tbody>
               </table>
             </div>
-
-            <fieldset class="evidence-box">
-              <legend>Evidencia fotográfica / documentos <span class="req">*</span></legend>
-              <p class="evidence-help">
-                Sube al menos un archivo por punto (fotos, video, PDF, Word, Excel, ZIP, etc.).
-              </p>
-              <div class="evidence-upload-grid" id="evidenciaUploads"></div>
-            </fieldset>
           </div>
+        </section>
 
-          <label class="field">
+        <section class="card-section" id="evidenciaSection">
+          <header class="section-head">
+            <span>7</span>
+            <h2>Evidencia fotográfica / documentos <span class="req">*</span></h2>
+          </header>
+          <p class="section-note">
+            Sube al menos un archivo por punto (fotos, video, PDF, Word, Excel, ZIP, etc.).
+          </p>
+          <div class="evidence-upload-grid" id="evidenciaUploads"></div>
+
+          <label class="field" style="margin-top: 1rem">
             <span>Observaciones <span class="req">*</span></span>
             <textarea name="observaciones" rows="3" placeholder="Notas adicionales del cierre… (si no hay, escribe Ninguna)" required></textarea>
           </label>
@@ -238,7 +241,7 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-    <script src="./config.js?v=20260811r6"></script>
-    <script src="./app.js?v=20260811r6" defer></script>
+    <script src="./config.js?v=20260811r7"></script>
+    <script src="./app.js?v=20260811r7" defer></script>
   </body>
 </html>

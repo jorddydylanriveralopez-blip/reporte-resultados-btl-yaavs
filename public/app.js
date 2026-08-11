@@ -136,7 +136,6 @@
       const checked = form.querySelector('input[name="hayIncidencia"]:checked');
       const open = checked?.value === "Sí";
       setIncidenciaDetalleOpen(open);
-      if (!open) resetEvidence();
     };
     radios.forEach((r) => r.addEventListener("change", sync));
     sync();
@@ -188,7 +187,7 @@
             hidden
           />
           <span class="evidence-pick-btn">Subir evidencia</span>
-          <span class="evidence-pick-hint">Obligatorio · cualquier archivo · máx. ${MAX_FILES_PER_POINT} · ${MAX_FILE_MB} MB c/u</span>
+          <span class="evidence-pick-hint">Cualquier archivo · máx. ${MAX_FILES_PER_POINT} · ${MAX_FILE_MB} MB c/u</span>
         </label>
         <div class="evidence-previews" id="ev_prev_${i}"></div>
       </div>`;
@@ -413,16 +412,15 @@
           return `En incidencias, escribe la descripción de “${row.incidencia}” (si no aplica, “Ninguna”).`;
         }
       }
-
-      for (let i = 0; i < evidencia.length; i++) {
-        if (!(selectedFiles[i] || []).length) {
-          markInvalid(document.querySelector(`.evidence-card[data-idx="${i}"]`));
-          return `Sube al menos un archivo de evidencia en “${evidencia[i]}”.`;
-        }
-      }
     } else {
       answers.incidencias = [];
-      answers.evidenciaLabels = [];
+    }
+
+    for (let i = 0; i < evidencia.length; i++) {
+      if (!(selectedFiles[i] || []).length) {
+        markInvalid(document.querySelector(`.evidence-card[data-idx="${i}"]`));
+        return `Sube al menos un archivo de evidencia en “${evidencia[i]}”.`;
+      }
     }
 
     return "";
@@ -463,18 +461,15 @@
     const toSend = { ...answers };
     if (toSend.hayIncidencia !== "Sí") {
       toSend.incidencias = [];
-      toSend.evidenciaLabels = [];
     }
     payload.append("answers", JSON.stringify(toSend));
     payload.append("website", form.website?.value || "");
 
-    if (toSend.hayIncidencia === "Sí") {
-      evidencia.forEach((_, i) => {
-        (selectedFiles[i] || []).forEach((file) => {
-          payload.append(`ev_${i}`, file, file.name);
-        });
+    evidencia.forEach((_, i) => {
+      (selectedFiles[i] || []).forEach((file) => {
+        payload.append(`ev_${i}`, file, file.name);
       });
-    }
+    });
 
     submitBtn.disabled = true;
     submitBtn.textContent = "Enviando…";
