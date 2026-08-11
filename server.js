@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const express = require("express");
+const multer = require("multer");
 const ExcelJS = require("exceljs");
 
 (() => {
@@ -30,7 +31,19 @@ const PORT = Number(process.env.PORT) || 3000;
 const publicDir = path.join(__dirname, "public");
 const dataDir = path.join(__dirname, "data");
 const dataFile = path.join(dataDir, "responses.json");
+const uploadsRoot = path.join(dataDir, "uploads");
 const SHEETS_WEBHOOK_URL = String(process.env.SHEETS_WEBHOOK_URL || "").trim();
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+const MAX_FILES = 30;
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_UPLOAD_BYTES, files: MAX_FILES },
+  fileFilter(_req, file, cb) {
+    if (/^(image|video)\//.test(file.mimetype)) cb(null, true);
+    else cb(new Error("Solo se permiten imágenes o video."));
+  },
+});
 
 const FIELD_ORDER = [
   ["claveYaavser", "Clave YAAVSER"],
@@ -95,7 +108,56 @@ app.use(express.json({ limit: "2mb" }));
 
 function ensureStore() {
   if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+  if (!fs.existsSync(uploadsRoot)) fs.mkdirSync(uploadsRoot, { recursive: true });
   if (!fs.existsSync(dataFile)) fs.writeFileSync(dataFile, "[]", "utf8");
+}
+
+function safeFilename(name) {
+  const base = path.basename(String(name || "archivo"));
+  return base.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120) || "archivo";
+}
+
+function parseSubmitBody(req) {
+  const body = { ...(req.body || {}) };
+  if (typeof body.answers === "string") {
+    try {
+      body.answers = JSON.parse(body.answers);
+    } catch (_) {
+      body.answers = {};
+    }
+  }
+  return body;
+}
+
+function saveEvidenceFiles(entryId, labels, files) {
+  const dest = path.join(uploadsRoot, entryId);
+  fs.mkdirSync(dest, { recursive: true });
+  const byIndex = new Map();
+
+  for (const file of files || []) {
+    const m = /^ev_(\d+)$/.exec(file.fieldname || "");
+    if (!m) continue;
+    const idx = Number(m[1]);
+    const punto =
+      Array.isArray(labels) && labels[idx] != null
+        ? String(labels[idx])
+        : `Punto ${idx + 1}`;
+    const fname = `${Date.now()}_${idx}_${safeFilename(file.originalname)}`;
+    fs.writeFileSync(path.join(dest, fname), file.buffer);
+    const item = {
+      name: file.originalname || fname,
+      storedAs: fname,
+      url: `/uploads/${entryId}/${fname}`,
+      mime: file.mimetype || "",
+      size: file.size || 0,
+    };
+    if (!byIndex.has(idx)) byIndex.set(idx, { punto, files: [] });
+    byIndex.get(idx).files.push(item);
+  }
+
+  return [...byIndex.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([, value]) => value);
 }
 
 function readResponses() {
@@ -143,6 +205,19 @@ function flatten(entry) {
     const v = a[key];
     if (key === "comerciales" || key === "materiales" || key === "incidencias") {
       out[key] = stringifyComplex(v);
+    } else if (key === "evidencia" && Array.isArray(v)) {
+      out[key] = v
+        .map((row) => {
+          if (row && typeof row === "object") {
+            const names = Array.isArray(row.files)
+              ? row.files.map((f) => f.name || f.url || "").filter(Boolean).join(", ")
+              : "";
+            return names ? `${row.punto}: ${names}` : String(row.punto || "");
+          }
+          return String(row);
+        })
+        .filter(Boolean)
+        .join(" || ");
     } else if (Array.isArray(v)) out[key] = v.join(", ");
     else if (v == null) out[key] = "";
     else out[key] = String(v);
@@ -293,21 +368,39 @@ async function buildWorkbook(items) {
   return workbook;
 }
 
-app.post("/api/submit", async (req, res) => {
-  try {
-    if (req.body?.website || req.body?.answers?.website) {
-      return res.status(200).json({ ok: true, honeypot: true });
+app.post("/api/submit", (req, res) => {
+  upload.any()(req, res, async (err) => {
+    if (err) {
+      const msg =
+        err instanceof multer.MulterError
+          ? err.code === "LIMIT_FILE_SIZE"
+            ? `Cada archivo debe pesar máximo ${MAX_UPLOAD_BYTES / (1024 * 1024)} MB.`
+            : "No se pudieron subir los archivos."
+          : err.message || "No se pudieron subir los archivos.";
+      return res.status(400).json({ ok: false, error: msg });
     }
-    const entry = normalize(req.body);
-    const list = readResponses();
-    list.unshift(entry);
-    writeResponses(list);
-    const sheets = await forwardToSheets(entry);
-    res.status(201).json({ ok: true, id: entry.id, sheets });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ ok: false, error: "No se pudo guardar el reporte." });
-  }
+
+    try {
+      const body = parseSubmitBody(req);
+      if (body.website || body.answers?.website) {
+        return res.status(200).json({ ok: true, honeypot: true });
+      }
+
+      const entry = normalize(body);
+      const labels = entry.answers?.evidenciaLabels;
+      entry.answers.evidencia = saveEvidenceFiles(entry.id, labels, req.files);
+      delete entry.answers.evidenciaLabels;
+
+      const list = readResponses();
+      list.unshift(entry);
+      writeResponses(list);
+      const sheets = await forwardToSheets(entry);
+      res.status(201).json({ ok: true, id: entry.id, sheets });
+    } catch (e) {
+      console.error(e);
+      res.status(500).json({ ok: false, error: "No se pudo guardar el reporte." });
+    }
+  });
 });
 
 app.get("/api/responses", (_req, res) => {
@@ -399,6 +492,16 @@ app.post("/api/reset", (req, res) => {
 app.get("/resultados", (_req, res) => {
   res.sendFile(path.join(publicDir, "resultados.html"));
 });
+
+app.use(
+  "/uploads",
+  express.static(uploadsRoot, {
+    fallthrough: false,
+    setHeaders(res) {
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    },
+  }),
+);
 
 app.use(
   express.static(publicDir, {

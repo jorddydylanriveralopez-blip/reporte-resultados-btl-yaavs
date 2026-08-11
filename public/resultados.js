@@ -3,6 +3,7 @@
   const detailEl = document.getElementById("detail");
   const liveStatus = document.getElementById("liveStatus");
   let items = [];
+  let rawItems = [];
   let index = 0;
 
   const LABELS = {
@@ -28,7 +29,6 @@
     comerciales: "Resultados comerciales",
     materiales: "Material promocional",
     incidencias: "Incidencias",
-    evidencia: "Evidencia",
     observaciones: "Observaciones",
   };
 
@@ -45,6 +45,45 @@
       <div class="stat"><span>Abordados (suma)</span><strong>${sum("abordados")}</strong></div>
       <div class="stat"><span>Ventas (suma)</span><strong>${sum("ventas")}</strong></div>
     `;
+  }
+
+  function evidenceHtml(entryId) {
+    const full = rawItems.find((x) => x.id === entryId);
+    const blocks = full?.answers?.evidencia;
+    if (!Array.isArray(blocks) || !blocks.length) {
+      return `<p class="empty-evidence">Sin evidencias fotográficas en este reporte.</p>`;
+    }
+
+    return `
+      <div class="evidence-blocks">
+        ${blocks
+          .map((block) => {
+            const files = Array.isArray(block.files) ? block.files : [];
+            return `
+            <div class="evidence-block">
+              <h3>${escapeHtml(block.punto || "Evidencia")}</h3>
+              <div class="evidence-gallery">
+                ${files
+                  .map((f) => {
+                    const url = escapeAttr(f.url || "");
+                    const name = escapeHtml(f.name || "archivo");
+                    if (String(f.mime || "").startsWith("video/")) {
+                      return `<a class="evidence-item video" href="${url}" target="_blank" rel="noopener">
+                        <video src="${url}" muted playsinline></video>
+                        <span>${name}</span>
+                      </a>`;
+                    }
+                    return `<a class="evidence-item" href="${url}" target="_blank" rel="noopener">
+                      <img src="${url}" alt="${name}" loading="lazy" />
+                      <span>${name}</span>
+                    </a>`;
+                  })
+                  .join("")}
+              </div>
+            </div>`;
+          })
+          .join("")}
+      </div>`;
   }
 
   function renderDetail() {
@@ -72,6 +111,10 @@
           r.id || "",
         )}</p>
         <div class="rows">${rows}</div>
+        <div class="evidence-section">
+          <h3 class="evidence-title">Evidencia fotográfica</h3>
+          ${evidenceHtml(r.id)}
+        </div>
       </section>
     `;
 
@@ -93,11 +136,16 @@
       .replace(/"/g, "&quot;");
   }
 
+  function escapeAttr(str) {
+    return escapeHtml(str).replace(/'/g, "&#39;");
+  }
+
   async function load() {
     try {
       const res = await fetch("/api/responses", { cache: "no-store" });
       const data = await res.json();
       items = Array.isArray(data.responses) ? data.responses : [];
+      rawItems = Array.isArray(data.raw) ? data.raw : [];
       if (index >= items.length) index = 0;
       liveStatus.textContent = `En vivo · ${items.length} reporte${items.length === 1 ? "" : "s"}`;
       renderStats();

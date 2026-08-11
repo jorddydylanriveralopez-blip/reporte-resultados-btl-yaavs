@@ -12,6 +12,12 @@
   const incidencias = opts.incidencias || [];
   const evidencia = opts.evidencia || [];
 
+  const MAX_FILES_PER_POINT = 5;
+  const MAX_FILE_MB = 8;
+
+  /** @type {Record<number, File[]>} */
+  const selectedFiles = {};
+
   function showToast(msg) {
     if (!toast) return;
     toast.textContent = msg;
@@ -26,7 +32,7 @@
     const tbody = document.querySelector("#comercialTable tbody");
     tbody.innerHTML = comerciales
       .map(
-        (name, i) => `
+        (name) => `
       <tr data-servicio="${escapeAttr(name)}">
         <td class="row-label">${escapeHtml(name)}</td>
         <td><input type="number" min="0" data-k="interesados" aria-label="Interesados ${escapeAttr(name)}" /></td>
@@ -84,17 +90,108 @@
       .join("");
   }
 
+  function acceptForPoint(name) {
+    const lower = String(name).toLowerCase();
+    if (lower.includes("video")) return "video/*,image/*";
+    return "image/*,video/*";
+  }
+
   function fillEvidencia() {
-    const box = document.getElementById("evidenciaChecks");
+    const box = document.getElementById("evidenciaUploads");
     box.innerHTML = evidencia
-      .map(
-        (name) => `
-      <label class="check-pill">
-        <input type="checkbox" name="evidencia" value="${escapeAttr(name)}" />
-        <span>${escapeHtml(name)}</span>
-      </label>`,
-      )
+      .map((name, i) => {
+        selectedFiles[i] = [];
+        return `
+      <div class="evidence-card" data-idx="${i}">
+        <div class="evidence-card-head">
+          <strong>${escapeHtml(name)}</strong>
+          <span class="evidence-count" id="ev_count_${i}">0 archivos</span>
+        </div>
+        <label class="evidence-pick" for="ev_file_${i}">
+          <input
+            type="file"
+            id="ev_file_${i}"
+            accept="${acceptForPoint(name)}"
+            multiple
+            capture="environment"
+            hidden
+          />
+          <span class="evidence-pick-btn">Subir evidencia</span>
+          <span class="evidence-pick-hint">Fotos o video · máx. ${MAX_FILES_PER_POINT} · ${MAX_FILE_MB} MB c/u</span>
+        </label>
+        <div class="evidence-previews" id="ev_prev_${i}"></div>
+      </div>`;
+      })
       .join("");
+
+    evidencia.forEach((_, i) => {
+      const input = document.getElementById(`ev_file_${i}`);
+      input.addEventListener("change", () => onFilesChosen(i, input));
+    });
+  }
+
+  function onFilesChosen(idx, input) {
+    const incoming = [...(input.files || [])];
+    input.value = "";
+    const current = selectedFiles[idx] || [];
+    const next = [...current];
+
+    for (const file of incoming) {
+      if (!/^(image|video)\//.test(file.type)) {
+        showToast("Solo se permiten imágenes o video.");
+        continue;
+      }
+      if (file.size > MAX_FILE_MB * 1024 * 1024) {
+        showToast(`"${file.name}" supera ${MAX_FILE_MB} MB.`);
+        continue;
+      }
+      if (next.length >= MAX_FILES_PER_POINT) {
+        showToast(`Máximo ${MAX_FILES_PER_POINT} archivos por punto.`);
+        break;
+      }
+      next.push(file);
+    }
+
+    selectedFiles[idx] = next;
+    renderPreviews(idx);
+  }
+
+  function renderPreviews(idx) {
+    const files = selectedFiles[idx] || [];
+    const countEl = document.getElementById(`ev_count_${idx}`);
+    const prev = document.getElementById(`ev_prev_${idx}`);
+    if (countEl) {
+      countEl.textContent =
+        files.length === 1 ? "1 archivo" : `${files.length} archivos`;
+    }
+    if (!prev) return;
+
+    prev.innerHTML = files
+      .map((file, fi) => {
+        const url = URL.createObjectURL(file);
+        const isVideo = file.type.startsWith("video/");
+        return `
+        <div class="evidence-thumb" data-fi="${fi}">
+          ${
+            isVideo
+              ? `<video src="${url}" muted playsinline></video>`
+              : `<img src="${url}" alt="${escapeAttr(file.name)}" />`
+          }
+          <button type="button" class="evidence-remove" aria-label="Quitar ${escapeAttr(file.name)}">×</button>
+          <span class="evidence-name">${escapeHtml(file.name)}</span>
+        </div>`;
+      })
+      .join("");
+
+    prev.querySelectorAll(".evidence-remove").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const thumb = btn.closest(".evidence-thumb");
+        const fi = Number(thumb?.dataset.fi);
+        if (Number.isNaN(fi)) return;
+        selectedFiles[idx] = (selectedFiles[idx] || []).filter((_, j) => j !== fi);
+        renderPreviews(idx);
+      });
+    });
   }
 
   function escapeHtml(s) {
@@ -140,7 +237,7 @@
 
   function collectAnswers() {
     const fd = new FormData(form);
-    const answers = {
+    return {
       fecha: String(fd.get("fecha") || "").trim(),
       puntoDeVenta: String(fd.get("puntoDeVenta") || "").trim(),
       claveYaavser: String(fd.get("claveYaavser") || "").trim(),
@@ -163,12 +260,9 @@
       comerciales: collectComerciales(),
       materiales: collectMateriales(),
       incidencias: collectIncidencias(),
-      evidencia: [...form.querySelectorAll('input[name="evidencia"]:checked')].map(
-        (el) => el.value,
-      ),
+      evidenciaLabels: [...evidencia],
       observaciones: String(fd.get("observaciones") || "").trim(),
     };
-    return answers;
   }
 
   function validate(answers) {
@@ -177,6 +271,13 @@
     if (!answers.claveYaavser) return "Captura la clave YAAVSER.";
     if (!answers.responsable) return "Captura el responsable.";
     return "";
+  }
+
+  function resetEvidence() {
+    evidencia.forEach((_, i) => {
+      selectedFiles[i] = [];
+      renderPreviews(i);
+    });
   }
 
   form.addEventListener("submit", async (e) => {
@@ -190,16 +291,22 @@
       return;
     }
 
+    const payload = new FormData();
+    payload.append("answers", JSON.stringify(answers));
+    payload.append("website", form.website?.value || "");
+
+    evidencia.forEach((_, i) => {
+      (selectedFiles[i] || []).forEach((file) => {
+        payload.append(`ev_${i}`, file, file.name);
+      });
+    });
+
     submitBtn.disabled = true;
     submitBtn.textContent = "Enviando…";
     try {
       const res = await fetch(cfg.submitUrl || "/api/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          answers,
-          website: form.website?.value || "",
-        }),
+        body: payload,
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) {
@@ -220,6 +327,7 @@
 
   document.getElementById("anotherBtn")?.addEventListener("click", () => {
     form.reset();
+    resetEvidence();
     updateMaterialTotals();
     successPanel.hidden = true;
     form.hidden = false;

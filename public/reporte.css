@@ -216,6 +216,119 @@
   font-size: 0.88rem;
 }
 
+.evidence-help {
+  margin: 0 0 0.85rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.evidence-upload-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.evidence-card {
+  border: 1px solid rgba(15, 36, 64, 0.1);
+  border-radius: 14px;
+  background: rgba(15, 36, 64, 0.02);
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.evidence-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.evidence-card-head strong {
+  color: var(--navy);
+  font-size: 0.95rem;
+}
+
+.evidence-count {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.evidence-pick {
+  display: grid;
+  gap: 0.25rem;
+  cursor: pointer;
+}
+
+.evidence-pick-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.6rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2563b5, #0097b2);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.evidence-pick-hint {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.evidence-previews {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 0.45rem;
+}
+
+.evidence-thumb {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0f2440;
+  aspect-ratio: 1;
+}
+
+.evidence-thumb img,
+.evidence-thumb video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.evidence-remove {
+  position: absolute;
+  top: 0.2rem;
+  right: 0.2rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(15, 36, 64, 0.82);
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.evidence-name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.58rem;
+  color: #fff;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.72));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .check-grid {
   display: flex;
   flex-wrap: wrap;
@@ -232,6 +345,12 @@
   border: 1px solid rgba(15, 36, 64, 0.1);
   cursor: pointer;
   font-size: 0.86rem;
+}
+
+@media (max-width: 720px) {
+  .evidence-upload-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .form-actions {
