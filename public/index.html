@@ -18,8 +18,8 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles-base.css?v=20260813r2" />
-    <link rel="stylesheet" href="./reporte.css?v=20260813r2" />
+    <link rel="stylesheet" href="./styles-base.css?v=20260813r3" />
+    <link rel="stylesheet" href="./reporte.css?v=20260813r3" />
   </head>
   <body class="report-body">
     <div class="atmosphere" aria-hidden="true">
@@ -104,7 +104,7 @@
             <h2>Resumen de resultados</h2>
           </header>
           <div class="grid-3 metrics-grid">
-            <label class="field"><span>Abordados <span class="req">*</span></span><input type="number" min="0" inputmode="numeric" name="abordados" required /></label>
+            <label class="field"><span>Interesados <span class="req">*</span></span><input type="number" min="0" inputmode="numeric" name="abordados" required /></label>
             <label class="field"><span>Prospectos <span class="req">*</span></span><input type="number" min="0" inputmode="numeric" name="prospectos" required /></label>
             <label class="field"><span>Ventas <span class="req">*</span></span><input type="number" min="0" inputmode="numeric" name="ventas" required /></label>
             <label class="field"><span>Dinámicas <span class="req">*</span></span><input type="number" min="0" inputmode="numeric" name="dinamicas" required /></label>
@@ -125,7 +125,7 @@
             <label class="field field-computed">
               <span>Tasa de interés % <span class="req">*</span></span>
               <input type="number" min="0" step="0.1" inputmode="decimal" name="tasaInteres" required readonly tabindex="-1" value="0" aria-readonly="true" />
-              <small class="field-hint">Prospectos ÷ Abordados × 100</small>
+              <small class="field-hint">Prospectos ÷ Interesados × 100</small>
             </label>
             <label class="field field-computed">
               <span>Tasa de conversión % <span class="req">*</span></span>
@@ -252,6 +252,6 @@
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
     <script src="./config.js?v=20260811r8"></script>
-    <script src="./app.js?v=20260813r2" defer></script>
+    <script src="./app.js?v=20260813r3" defer></script>
   </body>
 </html>

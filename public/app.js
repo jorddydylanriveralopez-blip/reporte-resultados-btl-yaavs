@@ -523,7 +523,7 @@
       ["horarioFin", "horarioFin", "Captura el horario final."],
       ["ubicacion", "ubicacion", "Captura la ubicación."],
       ["promocionPrincipal", "promocionPrincipal", "Captura la promoción principal."],
-      ["abordados", "abordados", "Captura el número de abordados (puedes poner 0)."],
+      ["abordados", "abordados", "Captura el número de interesados (puedes poner 0)."],
       ["prospectos", "prospectos", "Captura el número de prospectos (puedes poner 0)."],
       ["ventas", "ventas", "Captura el número de ventas (puedes poner 0)."],
       ["dinamicas", "dinamicas", "Captura el número de dinámicas (puedes poner 0)."],

@@ -69,7 +69,7 @@ const FIELD_ORDER = [
   ["horarioFin", "Horario final"],
   ["ubicacion", "Ubicación"],
   ["promocionPrincipal", "Promoción principal"],
-  ["abordados", "Abordados"],
+  ["abordados", "Interesados"],
   ["prospectos", "Prospectos"],
   ["ventas", "Ventas"],
   ["dinamicas", "Dinámicas"],
@@ -509,7 +509,7 @@ async function buildWorkbook(items) {
     c.font = { bold: true, color: { argb: "FFFFFFFF" }, name: "Calibri" };
   });
   [
-    ["Suma abordados", sumKey("abordados")],
+    ["Suma interesados", sumKey("abordados")],
     ["Suma prospectos", sumKey("prospectos")],
     ["Suma ventas", sumKey("ventas")],
     ["Suma dinámicas", sumKey("dinamicas")],

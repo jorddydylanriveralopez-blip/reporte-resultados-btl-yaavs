@@ -55,7 +55,7 @@
     horarioFin: "Horario final",
     ubicacion: "Ubicación",
     promocionPrincipal: "Promoción principal",
-    abordados: "Abordados",
+    abordados: "Interesados",
     prospectos: "Prospectos",
     ventas: "Ventas",
     dinamicas: "Dinámicas",
@@ -510,7 +510,7 @@
   function renderMetrics(list) {
     metricsEl.innerHTML = `
       <div class="metric"><span>Total</span><strong>${list.length}</strong></div>
-      <div class="metric"><span>Abordados</span><strong>${sum(list, "abordados")}</strong></div>
+      <div class="metric"><span>Interesados</span><strong>${sum(list, "abordados")}</strong></div>
       <div class="metric"><span>Prospectos</span><strong>${sum(list, "prospectos")}</strong></div>
       <div class="metric"><span>Ventas</span><strong>${sum(list, "ventas")}</strong></div>
       <div class="metric"><span>Con incidencia</span><strong>${
@@ -659,7 +659,7 @@
             <p class="item-line">${escapeHtml(r.puntoDeVenta || "—")} · ${escapeHtml(
               r.responsable || "—",
             )}</p>
-            <p class="item-meta">Abordados ${escapeHtml(r.abordados || "0")} · Prospectos ${escapeHtml(
+            <p class="item-meta">Interesados ${escapeHtml(r.abordados || "0")} · Prospectos ${escapeHtml(
               r.prospectos || "0",
             )}${ev ? ` · ${ev} evidencia${ev === 1 ? "" : "s"}` : ""}</p>
             <p class="item-date">${formatDate(r.receivedAt || r.timestamp)}</p>
