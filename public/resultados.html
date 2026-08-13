@@ -3,46 +3,161 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#eef4fa" />
+    <meta name="theme-color" content="#002b44" />
     <title>Resultados · Reporte BTL YAAVS</title>
     <link rel="icon" href="./favicon.png" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./resultados.css?v=20260811r6" />
+    <link rel="stylesheet" href="./resultados.css?v=20260813btl1" />
   </head>
   <body>
-    <div class="atmosphere" aria-hidden="true">
-      <div class="wash wash-a"></div>
-      <div class="wash wash-b"></div>
+    <div class="shell">
+      <div class="atmosphere" aria-hidden="true">
+        <div class="orb orb-a"></div>
+        <div class="orb orb-b"></div>
+        <div class="grain"></div>
+      </div>
+
+      <header class="masthead">
+        <div class="masthead-inner">
+          <div class="brand-block">
+            <img
+              src="./assets/logo-yaavs-white.png"
+              alt="YAAVS"
+              class="brand-mark"
+              width="96"
+              height="96"
+            />
+            <div class="brand-copy">
+              <p class="eyebrow">Reporte de Resultados · Activación BTL</p>
+              <h1 class="brand-title">Respuestas en vivo</h1>
+              <p class="lede">Consulta, filtra y descarga los reportes que van llegando.</p>
+            </div>
+          </div>
+          <div class="masthead-actions">
+            <span class="live-chip" id="liveChip">
+              <span class="live-dot" aria-hidden="true"></span>
+              <strong id="liveCount">0</strong>&nbsp;en vivo
+            </span>
+            <a class="btn btn-quiet" href="./">Nuevo reporte</a>
+            <button type="button" class="btn btn-quiet" id="btnRefresh">Actualizar</button>
+            <a class="btn btn-quiet" href="./api/responses" target="_blank" rel="noopener">JSON</a>
+            <button type="button" class="btn btn-solid" id="btnExcel">Descargar Excel</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="page">
+        <section class="metrics" id="metrics" aria-label="Indicadores"></section>
+
+        <section class="charts" aria-label="Gráficas en vivo">
+          <div class="charts-head">
+            <h2>Gráficas en vivo</h2>
+            <p>Se actualizan solas con cada reporte nuevo.</p>
+          </div>
+          <div class="charts-grid">
+            <article class="chart-card">
+              <h3>¿Hay incidencia?</h3>
+              <div class="chart-wrap">
+                <canvas id="chartIncidencia" aria-label="Pastel de incidencias"></canvas>
+              </div>
+              <p class="chart-empty" id="emptyIncidencia" hidden>Sin datos</p>
+            </article>
+            <article class="chart-card">
+              <h3>Punto de venta</h3>
+              <div class="chart-wrap">
+                <canvas id="chartPunto" aria-label="Pastel de puntos de venta"></canvas>
+              </div>
+              <p class="chart-empty" id="emptyPunto" hidden>Sin datos</p>
+            </article>
+            <article class="chart-card">
+              <h3>Ventas por reporte</h3>
+              <div class="chart-wrap">
+                <canvas id="chartVentas" aria-label="Pastel de rangos de ventas"></canvas>
+              </div>
+              <p class="chart-empty" id="emptyVentas" hidden>Sin datos</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="toolbar" aria-label="Filtros">
+          <label class="field field-search">
+            <span class="sr-only">Buscar</span>
+            <input
+              type="search"
+              id="q"
+              placeholder="Buscar clave, PDV, responsable, observaciones…"
+              autocomplete="off"
+            />
+          </label>
+          <label class="field">
+            Punto de venta
+            <select id="fPunto">
+              <option value="">Todos</option>
+            </select>
+          </label>
+          <label class="field">
+            Incidencia
+            <select id="fIncidencia">
+              <option value="">Todas</option>
+              <option value="Sí">Sí</option>
+              <option value="No">No</option>
+            </select>
+          </label>
+          <label class="field">
+            Desde
+            <input type="date" id="desde" />
+          </label>
+          <label class="field">
+            Hasta
+            <input type="date" id="hasta" />
+          </label>
+          <label class="field">
+            Orden
+            <select id="orden">
+              <option value="fecha-desc">Fecha ↓</option>
+              <option value="fecha-asc">Fecha ↑</option>
+              <option value="ventas-desc">Ventas ↓</option>
+              <option value="clave-asc">Clave A–Z</option>
+            </select>
+          </label>
+          <div class="toolbar-end">
+            <div class="seg" role="group" aria-label="Vista">
+              <button type="button" class="on" id="viewGrid" data-view="grid">Grid</button>
+              <button type="button" id="viewList" data-view="list">Lista</button>
+            </div>
+            <button type="button" class="btn-text" id="btnClear">Limpiar</button>
+          </div>
+        </section>
+
+        <section class="main">
+          <div class="group-head">
+            <h2 id="groupTitle">Reportes</h2>
+            <span id="groupCount">0</span>
+          </div>
+          <ul class="board board-grid" id="board"></ul>
+          <div class="empty" id="empty" hidden>
+            <h2>Sin reportes aún</h2>
+            <p>Cuando alguien envíe un reporte, aparecerá aquí en tiempo real.</p>
+          </div>
+        </section>
+      </main>
     </div>
 
-    <header class="topbar">
-      <div class="brand-block">
-        <img src="./assets/logo-yaavs.png" alt="YAAVS" width="160" height="56" class="brand-logo" />
-        <div>
-          <h1>Resultados del reporte BTL</h1>
-          <p class="live-line">
-            <span class="live-dot" aria-hidden="true"></span>
-            <span id="liveStatus">Conectando…</span>
-          </p>
-        </div>
+    <dialog class="modal" id="modal">
+      <div class="modal-sheet">
+        <button type="button" class="modal-close" id="modalClose" aria-label="Cerrar">×</button>
+        <div class="modal-hero" id="modalHero"></div>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-actions" id="modalActions"></div>
       </div>
-      <div class="top-actions">
-        <a class="ghost-link" href="./api/export.xlsx">Exportar Excel</a>
-        <a class="ghost-link" href="./api/export.csv">CSV</a>
-        <a class="ghost-link" href="./">Nuevo reporte</a>
-      </div>
-    </header>
+    </dialog>
 
-    <main class="layout">
-      <section class="stats" id="stats"></section>
-      <section class="detail" id="detail"></section>
-    </main>
-
-    <script src="./resultados.js?v=20260811r6" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+    <script src="./resultados.js?v=20260813btl1" defer></script>
   </body>
 </html>
