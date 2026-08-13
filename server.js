@@ -3,6 +3,7 @@ const path = require("path");
 const express = require("express");
 const multer = require("multer");
 const ExcelJS = require("exceljs");
+const createBuildWorkbook = require("./lib/excel-workbook");
 
 (() => {
   try {
@@ -365,211 +366,16 @@ function sortedItems() {
     });
 }
 
-async function buildWorkbook(items) {
-  const workbook = new ExcelJS.Workbook();
-  workbook.creator = "YAAVS";
-  workbook.company = "YAAVS";
-  workbook.created = new Date();
-  workbook.modified = new Date();
+const buildWorkbookImpl = createBuildWorkbook({ ExcelJS, path, fs, publicDir });
 
-  const sheet = workbook.addWorksheet("Reportes BTL", {
-    views: [{ state: "frozen", ySplit: 2, xSplit: 2, showGridLines: false }],
+async function buildWorkbook(items, rawList = []) {
+  return buildWorkbookImpl(items, rawList, {
+    FIELD_ORDER,
+    COLUMN_WIDTHS,
+    formatDateMx,
   });
-
-  const headers = ["#", ...FIELD_ORDER.map(([, label]) => label)];
-  const keys = FIELD_ORDER.map(([key]) => key);
-  const colCount = headers.length;
-
-  sheet.columns = [
-    { key: "_n", width: 5 },
-    ...FIELD_ORDER.map(([key]) => ({
-      key,
-      width: COLUMN_WIDTHS[key] || 20,
-    })),
-  ];
-
-  const titleRow = sheet.addRow([
-    "Reporte de Resultados – Activación BTL YAAVS",
-    ...Array(colCount - 1).fill(""),
-  ]);
-  titleRow.height = 34;
-  sheet.mergeCells(1, 1, 1, colCount);
-  const titleCell = titleRow.getCell(1);
-  titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: NAVY } };
-  titleCell.font = { name: "Calibri", bold: true, color: { argb: "FFFFFFFF" }, size: 14 };
-  titleCell.alignment = { vertical: "middle", horizontal: "left", indent: 1 };
-
-  const headerRow = sheet.addRow(headers);
-  headerRow.height = 32;
-  headerRow.eachCell((cell) => {
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: TEAL } };
-    cell.font = { name: "Calibri", bold: true, color: { argb: "FFFFFFFF" }, size: 11 };
-    cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
-    cell.border = {
-      top: { style: "thin", color: { argb: TEAL } },
-      left: { style: "thin", color: { argb: TEAL } },
-      bottom: { style: "thin", color: { argb: TEAL } },
-      right: { style: "thin", color: { argb: TEAL } },
-    };
-  });
-
-  items.forEach((row, idx) => {
-    const values = [
-      idx + 1,
-      ...keys.map((k) => {
-        if (k === "receivedAt") return formatDateMx(row.receivedAt || row.timestamp);
-        if (NUM_KEYS.has(k)) {
-          const n = Number(row[k]);
-          return Number.isFinite(n) ? n : "";
-        }
-        const v = row[k];
-        return v == null || String(v).trim() === "" ? "" : String(v).trim();
-      }),
-    ];
-    const excelRow = sheet.addRow(values);
-    const longText =
-      String(row.comerciales || "").length > 70 ||
-      String(row.materiales || "").length > 70 ||
-      String(row.observaciones || "").length > 70 ||
-      String(row.incidencias || "").length > 70;
-    excelRow.height = longText ? 42 : 24;
-    const alt = idx % 2 === 1;
-
-    excelRow.eachCell((cell, colNumber) => {
-      const key = colNumber === 1 ? "_n" : keys[colNumber - 2];
-      cell.font = { name: "Calibri", size: 11, color: { argb: INK } };
-      cell.alignment = {
-        vertical: "middle",
-        horizontal: colNumber === 1 || CENTER_KEYS.has(key) ? "center" : "left",
-        wrapText: true,
-      };
-      cell.border = {
-        top: { style: "thin", color: { argb: LINE } },
-        left: { style: "thin", color: { argb: LINE } },
-        bottom: { style: "thin", color: { argb: LINE } },
-        right: { style: "thin", color: { argb: LINE } },
-      };
-      if (alt) {
-        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: ALT } };
-      }
-      if (colNumber === 2) {
-        cell.font = { name: "Calibri", size: 11, bold: true, color: { argb: TEAL } };
-      }
-      if (key === "hayIncidencia") {
-        const v = String(cell.value || "").toLowerCase();
-        if (v === "sí" || v === "si") {
-          cell.font = { name: "Calibri", size: 11, bold: true, color: { argb: "FFC83048" } };
-        } else if (v === "no") {
-          cell.font = { name: "Calibri", size: 11, bold: true, color: { argb: "FF28785A" } };
-        }
-      }
-    });
-  });
-
-  sheet.autoFilter = {
-    from: { row: 2, column: 1 },
-    to: { row: Math.max(2, items.length + 2), column: colCount },
-  };
-
-  const summary = workbook.addWorksheet("Resumen", {
-    views: [{ showGridLines: false }],
-  });
-  summary.columns = [
-    { key: "a", width: 42 },
-    { key: "b", width: 18 },
-    { key: "c", width: 12 },
-    { key: "d", width: 14 },
-  ];
-
-  const sTitle = summary.addRow(["Reporte de Resultados – Activación BTL YAAVS", "", "", ""]);
-  summary.mergeCells(1, 1, 1, 4);
-  sTitle.height = 32;
-  sTitle.getCell(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: NAVY } };
-  sTitle.getCell(1).font = {
-    name: "Calibri",
-    bold: true,
-    size: 14,
-    color: { argb: "FFFFFFFF" },
-  };
-  sTitle.getCell(1).alignment = { vertical: "middle", indent: 1 };
-
-  summary.addRow([]);
-  const meta1 = summary.addRow(["Total de reportes", items.length, "", ""]);
-  meta1.getCell(1).font = { bold: true, name: "Calibri", color: { argb: INK } };
-  meta1.getCell(2).font = { bold: true, name: "Calibri", size: 14, color: { argb: TEAL } };
-  summary.addRow(["Generado", formatDateMx(new Date().toISOString()), "", ""]);
-
-  const sumKey = (key) => items.reduce((acc, r) => acc + (Number(r[key]) || 0), 0);
-
-  summary.addRow([]);
-  const hInd = summary.addRow(["Indicadores operativos", "Valor", "", ""]);
-  hInd.eachCell((c, i) => {
-    if (i > 2) return;
-    c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: TEAL } };
-    c.font = { bold: true, color: { argb: "FFFFFFFF" }, name: "Calibri" };
-  });
-  [
-    ["Suma interesados", sumKey("abordados")],
-    ["Suma prospectos", sumKey("prospectos")],
-    ["Suma ventas", sumKey("ventas")],
-    ["Suma dinámicas", sumKey("dinamicas")],
-    ["Suma participantes", sumKey("participantes")],
-    ["Suma promocionales", sumKey("promocionales")],
-    [
-      "Reportes con incidencia",
-      items.filter((r) => String(r.hayIncidencia || "").toLowerCase() === "sí").length,
-    ],
-  ].forEach(([label, value], i) => {
-    const row = summary.addRow([label, value, "", ""]);
-    row.getCell(1).font = { name: "Calibri", color: { argb: INK } };
-    row.getCell(2).font = { name: "Calibri", bold: true, color: { argb: NAVY } };
-    if (i % 2 === 1) {
-      row.getCell(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: ALT } };
-      row.getCell(2).fill = { type: "pattern", pattern: "solid", fgColor: { argb: ALT } };
-    }
-  });
-
-  const distBlock = (title, key) => {
-    summary.addRow([]);
-    const head = summary.addRow([title, "Cantidad", "%", ""]);
-    head.eachCell((c, i) => {
-      if (i > 3) return;
-      c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: NAVY } };
-      c.font = { bold: true, color: { argb: "FFFFFFFF" }, name: "Calibri" };
-    });
-    const map = new Map();
-    items.forEach((r) => {
-      const v = String(r[key] || "").trim();
-      if (!v) return;
-      map.set(v, (map.get(v) || 0) + 1);
-    });
-    const total = [...map.values()].reduce((a, b) => a + b, 0) || 1;
-    [...map.entries()]
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "es"))
-      .forEach(([label, count], i) => {
-        const row = summary.addRow([label, count, Math.round((count / total) * 100), ""]);
-        if (i % 2 === 1) {
-          row.eachCell((c, idx) => {
-            if (idx > 3) return;
-            c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: ALT } };
-          });
-        }
-      });
-    if (!map.size) {
-      summary.addRow(["Sin datos", 0, 0, ""]);
-    }
-  };
-
-  distBlock("Distribución · ¿Hay incidencia?", "hayIncidencia");
-  distBlock("Distribución · Punto de venta", "puntoDeVenta");
-  distBlock("Distribución · Responsable", "responsable");
-
-  summary.addRow([]);
-  const foot = summary.addRow(["YAAVS · Reporte BTL", "", "", ""]);
-  foot.getCell(1).font = { name: "Calibri", italic: true, size: 10, color: { argb: "FF6B8296" } };
-
-  return workbook;
 }
+
 
 app.post("/api/submit", (req, res) => {
   upload.any()(req, res, async (err) => {
@@ -625,8 +431,9 @@ app.get("/api/responses", (_req, res) => {
 
 app.get("/api/export.xlsx", async (_req, res) => {
   try {
+    const rawList = readResponses();
     const items = sortedItems();
-    const workbook = await buildWorkbook(items);
+    const workbook = await buildWorkbook(items, rawList);
     const stamp = new Date().toISOString().slice(0, 10);
     const filename = `Reporte_Resultados_BTL_YAAVS_${stamp}.xlsx`;
     res.setHeader(
