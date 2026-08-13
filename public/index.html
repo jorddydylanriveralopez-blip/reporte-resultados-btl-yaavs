@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#eef4fa" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="description"
+      content="Reporte de Resultados – Activación BTL YAAVS. Formato rápido de cierre."
+    />
+    <title>Reporte de Resultados · Activación BTL YAAVS</title>
+    <link rel="icon" href="./favicon.png" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles-base.css?v=20260811r8" />
+    <link rel="stylesheet" href="./reporte.css?v=20260811r8" />
+  </head>
+  <body class="report-body">
+    <div class="atmosphere" aria-hidden="true">
+      <div class="wash wash-a"></div>
+      <div class="wash wash-b"></div>
+    </div>
+
+    <header class="topbar report-topbar">
+      <div class="brand">
+        <img
+          src="./assets/logo-yaavs.png"
+          alt="YAAVS"
+          class="brand-logo"
+          width="180"
+          height="63"
+        />
+      </div>
+      <a class="ghost-link results-link" href="./resultados">Ver respuestas</a>
+    </header>
+
+    <main class="report-main">
+      <section class="report-hero">
+        <p class="eyebrow">Formato rápido de cierre</p>
+        <h1>Reporte de Resultados – Activación BTL</h1>
+        <p class="lede">
+          Completa <strong>todo</strong> el reporte (campos, tablas y evidencias).
+          Los campos con <span class="req">*</span> son obligatorios. Tus respuestas se guardan
+          aparte de la
+          <a href="https://lawngreen-guanaco-656732.hostingersite.com/" target="_blank" rel="noopener">encuesta de satisfacción</a>.
+        </p>
+      </section>
+
+      <form id="reportForm" class="report-form" novalidate>
+        <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+        <section class="card-section">
+          <header class="section-head">
+            <span>1</span>
+            <h2>Datos generales</h2>
+          </header>
+          <div class="grid-2">
+            <label class="field">
+              <span>Fecha <span class="req">*</span></span>
+              <input type="date" name="fecha" required />
+            </label>
+            <label class="field">
+              <span>Punto de venta <span class="req">*</span></span>
+              <input type="text" name="puntoDeVenta" placeholder="Nombre del PDV" required autocomplete="organization" />
+            </label>
+            <label class="field">
+              <span>Clave YAAVSER <span class="req">*</span></span>
+              <input type="text" name="claveYaavser" placeholder="Ej. 25CL03636F32" required autocomplete="off" />
+            </label>
+            <label class="field">
+              <span>Responsable <span class="req">*</span></span>
+              <input type="text" name="responsable" placeholder="Nombre del responsable" required autocomplete="name" />
+            </label>
+            <label class="field">
+              <span>Promotor(es) <span class="req">*</span></span>
+              <input type="text" name="promotores" placeholder="Nombres" required />
+            </label>
+            <div class="field field-split">
+              <span>Horario <span class="req">*</span></span>
+              <div class="split-inputs">
+                <input type="time" name="horarioInicio" aria-label="Hora inicio" required />
+                <span class="split-sep">a</span>
+                <input type="time" name="horarioFin" aria-label="Hora fin" required />
+              </div>
+            </div>
+            <label class="field">
+              <span>Ubicación <span class="req">*</span></span>
+              <input type="text" name="ubicacion" placeholder="Ciudad / zona" required />
+            </label>
+            <label class="field">
+              <span>Promoción principal <span class="req">*</span></span>
+              <input type="text" name="promocionPrincipal" placeholder="Promoción del día" required />
+            </label>
+          </div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head">
+            <span>2</span>
+            <h2>Resumen de resultados</h2>
+          </header>
+          <div class="grid-3 metrics-grid">
+            <label class="field"><span>Abordados <span class="req">*</span></span><input type="number" min="0" inputmode="numeric" name="abordados" required /></label>
+            <label class="field"><span>Prospectos <span class="req">*</span></span><input type="number" min="0" inputmode="numeric" name="prospectos" required /></label>
+            <label class="field"><span>Ventas <span class="req">*</span></span><input type="number" min="0" inputmode="numeric" name="ventas" required /></label>
+            <label class="field"><span>Dinámicas <span class="req">*</span></span><input type="number" min="0" inputmode="numeric" name="dinamicas" required /></label>
+            <label class="field"><span>Participantes <span class="req">*</span></span><input type="number" min="0" inputmode="numeric" name="participantes" required /></label>
+            <label class="field"><span>Promocionales <span class="req">*</span></span><input type="number" min="0" inputmode="numeric" name="promocionales" required /></label>
+          </div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head">
+            <span>3</span>
+            <h2>Indicadores</h2>
+          </header>
+          <div class="grid-2">
+            <label class="field"><span>Tasa de interés % <span class="req">*</span></span><input type="number" min="0" step="0.1" inputmode="decimal" name="tasaInteres" required /></label>
+            <label class="field"><span>Tasa de conversión % <span class="req">*</span></span><input type="number" min="0" step="0.1" inputmode="decimal" name="tasaConversion" required /></label>
+            <label class="field"><span>Promedio ventas/hora <span class="req">*</span></span><input type="number" min="0" step="0.1" inputmode="decimal" name="promedioVentasHora" required /></label>
+            <label class="field"><span>Total dinámicas <span class="req">*</span></span><input type="number" min="0" inputmode="numeric" name="totalDinamicas" required /></label>
+          </div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head">
+            <span>4</span>
+            <h2>Resultados comerciales <span class="req">*</span></h2>
+          </header>
+          <p class="section-note">Completa interesados, operaciones y motivo en cada servicio (puedes poner 0).</p>
+          <div class="table-wrap">
+            <table class="data-table stack-on-mobile" id="comercialTable">
+              <thead>
+                <tr>
+                  <th>Servicio promovido</th>
+                  <th>Interesados</th>
+                  <th>Operaciones</th>
+                  <th>Principal motivo de no cierre</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head">
+            <span>5</span>
+            <h2>Material promocional <span class="req">*</span></h2>
+          </header>
+          <p class="section-note">
+            Por cada material captura fecha de entrega, cantidades y, si hubo merma o daño, sube evidencias (fotos o videos).
+            Puedes poner 0 en las cantidades.
+          </p>
+          <div id="materialList" class="material-list"></div>
+          <div class="material-totals" aria-live="polite">
+            <strong>TOTALES</strong>
+            <span>Entregada: <b id="matEntTotal">0</b></span>
+            <span>Utilizada: <b id="matUtiTotal">0</b></span>
+            <span>Devuelta: <b id="matDevTotal">0</b></span>
+          </div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head">
+            <span>6</span>
+            <h2>Incidencias</h2>
+          </header>
+
+          <fieldset class="gate-box">
+            <legend>¿Hay una incidencia? <span class="req">*</span></legend>
+            <div class="yesno gate-yesno" role="radiogroup" aria-label="¿Hay una incidencia?">
+              <label><input type="radio" name="hayIncidencia" value="Sí" required /> Sí</label>
+              <label><input type="radio" name="hayIncidencia" value="No" required /> No</label>
+            </div>
+          </fieldset>
+
+          <div id="incidenciaDetalle" class="incidencia-detalle" hidden>
+            <p class="section-note">
+              Detalla cada tipo de incidencia (Sí/No y descripción breve).
+            </p>
+            <div class="table-wrap">
+              <table class="data-table stack-on-mobile" id="incidenciaTable">
+                <thead>
+                  <tr>
+                    <th>Incidencia</th>
+                    <th>Sí / No</th>
+                    <th>Descripción breve</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="card-section" id="evidenciaSection">
+          <header class="section-head">
+            <span>7</span>
+            <h2>Evidencia fotográfica / documentos <span class="req">*</span></h2>
+          </header>
+          <p class="section-note">
+            Sube al menos un archivo por punto (fotos, video, PDF, Word, Excel, ZIP, etc.).
+          </p>
+          <div class="evidence-upload-grid" id="evidenciaUploads"></div>
+
+          <label class="field" style="margin-top: 1rem">
+            <span>Observaciones <span class="req">*</span></span>
+            <textarea name="observaciones" rows="3" placeholder="Notas adicionales del cierre… (si no hay, escribe Ninguna)" required></textarea>
+          </label>
+        </section>
+
+        <div class="form-actions">
+          <p class="form-hint" id="formHint"></p>
+          <button type="submit" class="btn-primary" id="submitBtn">Enviar reporte</button>
+        </div>
+      </form>
+
+      <section class="success-panel" id="successPanel" hidden>
+        <h2>Reporte enviado</h2>
+        <p>Quedó guardado en las respuestas del reporte BTL.</p>
+        <div class="success-actions">
+          <button type="button" class="btn-primary" id="anotherBtn">Enviar otro</button>
+          <a class="ghost-link" href="./resultados">Ver respuestas</a>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+    <script src="./config.js?v=20260811r8"></script>
+    <script src="./app.js?v=20260811r8" defer></script>
+  </body>
+</html>

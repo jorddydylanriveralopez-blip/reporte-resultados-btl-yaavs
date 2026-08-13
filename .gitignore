@@ -1,0 +1,6 @@
+node_modules
+.env
+data/responses.json
+.DS_Store
+*.zip
+data/uploads/
