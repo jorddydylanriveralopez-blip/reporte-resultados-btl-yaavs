@@ -18,7 +18,6 @@ window.YAAVS_REPORT_OPTIONS = {
     "Cilindro AT&T",
     "Llavero 1",
     "Tarjetero anillo",
-    "Tarjetero",
     "Plumas cartón",
     "Plumas blancas",
     "Plumas negras",
