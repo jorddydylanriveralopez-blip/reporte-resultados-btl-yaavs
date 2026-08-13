@@ -291,6 +291,272 @@ a {
   gap: 1rem;
 }
 
+.inventory {
+  margin-top: 1.35rem;
+  padding: 1.15rem 1.2rem 1.25rem;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 36px rgba(2, 28, 46, 0.06);
+  animation: rise 0.7s ease both;
+}
+
+.inventory-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin-bottom: 0.95rem;
+}
+
+.inventory-head h2 {
+  margin: 0 0 0.25rem;
+  font-family: "Space Grotesk", Outfit, sans-serif;
+  font-size: 1.08rem;
+  letter-spacing: -0.02em;
+  color: var(--navy);
+}
+
+.inventory-head p {
+  margin: 0;
+  max-width: 46rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.inventory-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.inventory-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 0.95rem;
+}
+
+.inv-kpi {
+  padding: 0.7rem 0.8rem;
+  border-radius: 12px;
+  background: #f3f8fb;
+  border: 1px solid rgba(0, 43, 68, 0.06);
+}
+
+.inv-kpi span {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.inv-kpi strong {
+  display: block;
+  margin-top: 0.2rem;
+  font-family: "Space Grotesk", Outfit, sans-serif;
+  font-size: 1.25rem;
+  color: var(--navy);
+  letter-spacing: -0.03em;
+}
+
+.inventory-table-wrap {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+}
+
+.inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+  font-size: 0.9rem;
+}
+
+.inventory-table th,
+.inventory-table td {
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.inventory-table th {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: #f7fafc;
+}
+
+.inventory-table td.num,
+.inventory-table th.num,
+.inventory-table tfoot td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-family: "Space Grotesk", Outfit, sans-serif;
+}
+
+.inventory-table tbody tr:hover {
+  background: rgba(0, 160, 200, 0.05);
+}
+
+.inventory-table tfoot td {
+  font-weight: 700;
+  background: #eef6fa;
+  border-bottom: 0;
+  color: var(--navy);
+}
+
+.inventory-empty {
+  margin: 0;
+  padding: 1.1rem 0.9rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.inventory-movements {
+  margin-top: 1.15rem;
+}
+
+.inventory-movements-head h3 {
+  margin: 0 0 0.2rem;
+  font-size: 0.98rem;
+  color: var(--navy);
+  font-family: "Space Grotesk", Outfit, sans-serif;
+}
+
+.inventory-movements-head p {
+  margin: 0 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.movements-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.movement-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0.85rem 0.95rem;
+  background: #fbfdfe;
+}
+
+.movement-card header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 0.85rem;
+  margin-bottom: 0.55rem;
+}
+
+.movement-card h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--navy);
+}
+
+.movement-card .meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.movement-mini {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.movement-mini th,
+.movement-mini td {
+  padding: 0.35rem 0.4rem;
+  border-bottom: 1px solid rgba(7, 24, 36, 0.06);
+  text-align: left;
+}
+
+.movement-mini th {
+  color: var(--muted);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.movement-mini td.num,
+.movement-mini th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.movement-mini tr:last-child td {
+  border-bottom: 0;
+}
+
+.badge-merma {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #fde8ec;
+  color: #9b2038;
+}
+
+.badge-ok {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #e7f6ef;
+  color: #1f6b4a;
+}
+
+.modal-materials {
+  margin: 0.85rem 0 0.35rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line);
+}
+
+.modal-materials h3 {
+  margin: 0 0 0.55rem;
+  font-size: 0.95rem;
+  color: var(--navy);
+}
+
+.modal-mat-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.modal-mat-table th,
+.modal-mat-table td {
+  padding: 0.45rem 0.4rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.modal-mat-table th {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+.modal-mat-table td.num,
+.modal-mat-table th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 .chart-card {
   background: rgba(255, 255, 255, 0.94);
   border-radius: 18px;
@@ -827,6 +1093,10 @@ a {
 @media (max-width: 1100px) {
   .charts-grid {
     grid-template-columns: 1fr;
+  }
+
+  .inventory-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .toolbar {

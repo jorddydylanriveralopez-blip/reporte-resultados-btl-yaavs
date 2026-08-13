@@ -31,6 +31,9 @@
     ventas: null,
   };
 
+  let lastInventoryKey = "";
+  let lastInventory = { summary: [], totals: {}, movements: [] };
+
   const PIE_COLORS = [
     "#00a0c8",
     "#002b44",
@@ -137,6 +140,306 @@
       n += Array.isArray(row?.evidenciasMerma) ? row.evidenciasMerma.length : 0;
     });
     return n;
+  }
+
+  function toNum(v) {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function isMermaSi(v) {
+    const s = String(v || "")
+      .trim()
+      .toLowerCase();
+    return s === "sí" || s === "si";
+  }
+
+  function materialsOf(entryId) {
+    const full = rawItems.find((x) => x.id === entryId);
+    return Array.isArray(full?.answers?.materiales) ? full.answers.materiales : [];
+  }
+
+  function buildInventory(list) {
+    const byMaterial = new Map();
+    const movements = [];
+
+    const sorted = [...list].sort((a, b) => {
+      const da = parseDate(a.receivedAt || a.timestamp)?.getTime() || 0;
+      const db = parseDate(b.receivedAt || b.timestamp)?.getTime() || 0;
+      return db - da;
+    });
+
+    sorted.forEach((r) => {
+      const mats = materialsOf(r.id);
+      if (!mats.length) return;
+
+      const rows = mats.map((m) => ({
+        material: String(m.material || "Sin nombre").trim() || "Sin nombre",
+        fechaEntrega: m.fechaEntrega || "",
+        entregada: toNum(m.cantidadEntregada),
+        utilizada: toNum(m.cantidadUtilizada),
+        devuelta: toNum(m.cantidadDevuelta),
+        merma: String(m.mermaDanio || ""),
+        evidencias: Array.isArray(m.evidenciasMerma) ? m.evidenciasMerma.length : 0,
+      }));
+
+      movements.push({
+        id: r.id,
+        clave: r.claveYaavser || "",
+        punto: r.puntoDeVenta || "",
+        fecha: r.fecha || "",
+        receivedAt: r.receivedAt || r.timestamp || "",
+        materiales: rows,
+      });
+
+      rows.forEach((row) => {
+        if (!byMaterial.has(row.material)) {
+          byMaterial.set(row.material, {
+            material: row.material,
+            entregada: 0,
+            utilizada: 0,
+            devuelta: 0,
+            mermaSi: 0,
+            reportes: 0,
+          });
+        }
+        const agg = byMaterial.get(row.material);
+        agg.entregada += row.entregada;
+        agg.utilizada += row.utilizada;
+        agg.devuelta += row.devuelta;
+        if (isMermaSi(row.merma)) agg.mermaSi += 1;
+        agg.reportes += 1;
+      });
+    });
+
+    const summary = [...byMaterial.values()]
+      .map((row) => ({
+        ...row,
+        saldo: row.entregada - row.utilizada,
+      }))
+      .sort((a, b) => a.material.localeCompare(b.material, "es"));
+
+    const totals = summary.reduce(
+      (acc, row) => {
+        acc.entregada += row.entregada;
+        acc.utilizada += row.utilizada;
+        acc.devuelta += row.devuelta;
+        acc.saldo += row.saldo;
+        acc.mermaSi += row.mermaSi;
+        acc.reportes += row.reportes;
+        return acc;
+      },
+      { entregada: 0, utilizada: 0, devuelta: 0, saldo: 0, mermaSi: 0, reportes: 0 },
+    );
+
+    return { summary, totals, movements };
+  }
+
+  function renderInventory(list) {
+    const inv = buildInventory(list);
+    lastInventory = inv;
+    const key = JSON.stringify({
+      totals: inv.totals,
+      summary: inv.summary,
+      moves: inv.movements.map((m) => m.id),
+    });
+    if (key === lastInventoryKey) return;
+    lastInventoryKey = key;
+
+    const kpis = document.getElementById("inventoryKpis");
+    const body = document.getElementById("inventoryBody");
+    const foot = document.getElementById("inventoryFoot");
+    const empty = document.getElementById("inventoryEmpty");
+    const movesEl = document.getElementById("movementsList");
+    const table = document.getElementById("inventoryTable");
+    if (!kpis || !body || !foot || !empty || !movesEl || !table) return;
+
+    const t = inv.totals;
+    kpis.innerHTML = `
+      <div class="inv-kpi"><span>Entregada</span><strong>${t.entregada}</strong></div>
+      <div class="inv-kpi"><span>Utilizada</span><strong>${t.utilizada}</strong></div>
+      <div class="inv-kpi"><span>Devuelta</span><strong>${t.devuelta}</strong></div>
+      <div class="inv-kpi"><span>Saldo (ent − uti)</span><strong>${t.saldo}</strong></div>
+    `;
+
+    if (!inv.summary.length) {
+      table.hidden = true;
+      empty.hidden = false;
+      foot.innerHTML = "";
+      body.innerHTML = "";
+      movesEl.innerHTML = `<p class="inventory-empty">Aún no hay movimientos de material.</p>`;
+      return;
+    }
+
+    table.hidden = false;
+    empty.hidden = true;
+    body.innerHTML = inv.summary
+      .map(
+        (row) => `
+      <tr>
+        <td>${escapeHtml(row.material)}</td>
+        <td class="num">${row.entregada}</td>
+        <td class="num">${row.utilizada}</td>
+        <td class="num">${row.devuelta}</td>
+        <td class="num">${row.saldo}</td>
+        <td class="num">${row.mermaSi}</td>
+        <td class="num">${row.reportes}</td>
+      </tr>`,
+      )
+      .join("");
+    foot.innerHTML = `
+      <tr>
+        <td>TOTAL</td>
+        <td class="num">${t.entregada}</td>
+        <td class="num">${t.utilizada}</td>
+        <td class="num">${t.devuelta}</td>
+        <td class="num">${t.saldo}</td>
+        <td class="num">${t.mermaSi}</td>
+        <td class="num">${inv.summary.length} mats</td>
+      </tr>`;
+
+    movesEl.innerHTML = inv.movements
+      .map((m) => {
+        const rows = m.materiales
+          .map(
+            (row) => `
+          <tr>
+            <td>${escapeHtml(row.material)}</td>
+            <td class="num">${row.entregada}</td>
+            <td class="num">${row.utilizada}</td>
+            <td class="num">${row.devuelta}</td>
+            <td>${
+              isMermaSi(row.merma)
+                ? `<span class="badge-merma">Merma${row.evidencias ? ` · ${row.evidencias}` : ""}</span>`
+                : `<span class="badge-ok">OK</span>`
+            }</td>
+          </tr>`,
+          )
+          .join("");
+        return `
+        <article class="movement-card">
+          <header>
+            <div>
+              <h4>${escapeHtml(m.clave || "Sin clave")}</h4>
+              <p class="meta">${escapeHtml(m.punto || "—")}${
+                m.fecha ? ` · act. ${escapeHtml(m.fecha)}` : ""
+              }</p>
+            </div>
+            <p class="meta">${formatDate(m.receivedAt)}</p>
+          </header>
+          <table class="movement-mini">
+            <thead>
+              <tr>
+                <th>Material</th>
+                <th class="num">Ent</th>
+                <th class="num">Uti</th>
+                <th class="num">Dev</th>
+                <th>Merma</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </article>`;
+      })
+      .join("");
+  }
+
+  function materialsModalHtml(entryId) {
+    const mats = materialsOf(entryId);
+    if (!mats.length) {
+      return `<div class="modal-materials"><h3>Material promocional</h3><p class="empty-evidence">Sin materiales en este reporte.</p></div>`;
+    }
+    const rows = mats
+      .map((m) => {
+        const name = m.material || "—";
+        const ent = toNum(m.cantidadEntregada);
+        const uti = toNum(m.cantidadUtilizada);
+        const dev = toNum(m.cantidadDevuelta);
+        const merma = isMermaSi(m.mermaDanio)
+          ? `<span class="badge-merma">Sí${
+              Array.isArray(m.evidenciasMerma) && m.evidenciasMerma.length
+                ? ` · ${m.evidenciasMerma.length} evid.`
+                : ""
+            }</span>`
+          : `<span class="badge-ok">No</span>`;
+        return `<tr>
+          <td>${escapeHtml(name)}<div class="meta" style="font-size:0.75rem;color:var(--muted)">Entrega: ${escapeHtml(
+            m.fechaEntrega || "—",
+          )}</div></td>
+          <td class="num">${ent}</td>
+          <td class="num">${uti}</td>
+          <td class="num">${dev}</td>
+          <td class="num">${ent - uti}</td>
+          <td>${merma}</td>
+        </tr>`;
+      })
+      .join("");
+    return `
+      <div class="modal-materials">
+        <h3>Material promocional</h3>
+        <table class="modal-mat-table">
+          <thead>
+            <tr>
+              <th>Material</th>
+              <th class="num">Ent</th>
+              <th class="num">Uti</th>
+              <th class="num">Dev</th>
+              <th class="num">Saldo</th>
+              <th>Merma</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  function downloadInventoryCsv() {
+    const inv = lastInventory || buildInventory(filtered());
+    const esc = (v) => {
+      const s = String(v ?? "");
+      return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [
+      ["Material", "Entregada", "Utilizada", "Devuelta", "Saldo", "Merma (reportes)", "Reportes"]
+        .map(esc)
+        .join(","),
+      ...inv.summary.map((r) =>
+        [r.material, r.entregada, r.utilizada, r.devuelta, r.saldo, r.mermaSi, r.reportes]
+          .map(esc)
+          .join(","),
+      ),
+      "",
+      ["Movimientos"].map(esc).join(","),
+      ["Fecha reporte", "Clave", "PDV", "Material", "Fecha entrega", "Entregada", "Utilizada", "Devuelta", "Merma"]
+        .map(esc)
+        .join(","),
+    ];
+    inv.movements.forEach((m) => {
+      m.materiales.forEach((row) => {
+        lines.push(
+          [
+            formatDate(m.receivedAt),
+            m.clave,
+            m.punto,
+            row.material,
+            row.fechaEntrega,
+            row.entregada,
+            row.utilizada,
+            row.devuelta,
+            row.merma,
+          ]
+            .map(esc)
+            .join(","),
+        );
+      });
+    });
+    const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Inventario_Material_BTL_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   function fillPuntoOptions(list) {
@@ -403,6 +706,7 @@
     }
 
     renderCharts(list);
+    renderInventory(list);
 
     const bKey = boardKey(list);
     if (!forceCards && bKey === lastBoardKey) return;
@@ -502,11 +806,14 @@
     modalBody.innerHTML =
       Object.keys(LABELS)
         .map((key) => {
+          if (key === "materiales") return "";
           const val = r[key];
           if (val == null || String(val).trim() === "") return "";
           return `<div class="modal-row"><b>${LABELS[key]}</b><span>${escapeHtml(val)}</span></div>`;
         })
-        .join("") + evidenceHtml(r.id);
+        .join("") +
+      materialsModalHtml(r.id) +
+      evidenceHtml(r.id);
     modalActions.innerHTML = `
       <button type="button" class="btn btn-soft" data-csv="${escapeHtml(r.id)}">CSV de este reporte</button>
       <a class="btn btn-soft" href="./api/export.xlsx" data-excel>Excel completo</a>
@@ -547,6 +854,7 @@
     hastaEl.value = "";
     ordenEl.value = "fecha-desc";
     lastBoardKey = "";
+    lastInventoryKey = "";
     renderBoard(true);
   }
 
@@ -567,6 +875,7 @@
         lastBoardKey = "";
         lastChartsKey = "";
         lastMetricsKey = "";
+        lastInventoryKey = "";
       }
       renderBoard();
     } catch (_) {
@@ -607,6 +916,7 @@
 
   document.getElementById("btnRefresh").addEventListener("click", load);
   document.getElementById("btnClear").addEventListener("click", clearFilters);
+  document.getElementById("btnInvCsv")?.addEventListener("click", downloadInventoryCsv);
 
   document.getElementById("btnExcel").addEventListener("click", async () => {
     const btn = document.getElementById("btnExcel");
@@ -643,12 +953,14 @@
       lastBoardKey = "";
       lastChartsKey = "";
       lastMetricsKey = "";
+      lastInventoryKey = "";
       renderBoard(true);
     });
     el.addEventListener("change", () => {
       lastBoardKey = "";
       lastChartsKey = "";
       lastMetricsKey = "";
+      lastInventoryKey = "";
       renderBoard(true);
     });
   });

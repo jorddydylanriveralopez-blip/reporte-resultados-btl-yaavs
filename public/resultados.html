@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./resultados.css?v=20260813btl1" />
+    <link rel="stylesheet" href="./resultados.css?v=20260813btl2" />
   </head>
   <body>
     <div class="shell">
@@ -35,7 +35,7 @@
             <div class="brand-copy">
               <p class="eyebrow">Reporte de Resultados · Activación BTL</p>
               <h1 class="brand-title">Respuestas en vivo</h1>
-              <p class="lede">Consulta, filtra y descarga los reportes que van llegando.</p>
+              <p class="lede">Consulta reportes, inventario de materiales (Trade) y descarga Excel.</p>
             </div>
           </div>
           <div class="masthead-actions">
@@ -134,6 +134,47 @@
           </div>
         </section>
 
+        <section class="inventory" aria-label="Inventario de material promocional">
+          <div class="inventory-head">
+            <div>
+              <h2>Inventario · Material promocional</h2>
+              <p>
+                Totales y movimientos de la pregunta 5 (entregada / utilizada / devuelta) para Trade.
+                Respeta los filtros.
+              </p>
+            </div>
+            <div class="inventory-actions">
+              <button type="button" class="btn btn-quiet" id="btnInvCsv">CSV inventario</button>
+            </div>
+          </div>
+          <div class="inventory-kpis" id="inventoryKpis"></div>
+          <div class="inventory-table-wrap">
+            <table class="inventory-table" id="inventoryTable">
+              <thead>
+                <tr>
+                  <th>Material</th>
+                  <th class="num">Entregada</th>
+                  <th class="num">Utilizada</th>
+                  <th class="num">Devuelta</th>
+                  <th class="num">Saldo</th>
+                  <th class="num">Merma</th>
+                  <th class="num">Reportes</th>
+                </tr>
+              </thead>
+              <tbody id="inventoryBody"></tbody>
+              <tfoot id="inventoryFoot"></tfoot>
+            </table>
+            <p class="inventory-empty" id="inventoryEmpty" hidden>Sin materiales en los reportes filtrados.</p>
+          </div>
+          <div class="inventory-movements">
+            <div class="inventory-movements-head">
+              <h3>Movimientos (cada reporte)</h3>
+              <p>Cómo va entrando el material activación por activación.</p>
+            </div>
+            <div class="movements-list" id="movementsList"></div>
+          </div>
+        </section>
+
         <section class="main">
           <div class="group-head">
             <h2 id="groupTitle">Reportes</h2>
@@ -158,6 +199,6 @@
     </dialog>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
-    <script src="./resultados.js?v=20260813btl1" defer></script>
+    <script src="./resultados.js?v=20260813btl2" defer></script>
   </body>
 </html>
