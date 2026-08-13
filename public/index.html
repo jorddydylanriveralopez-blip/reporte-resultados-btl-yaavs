@@ -18,8 +18,8 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles-base.css?v=20260811r8" />
-    <link rel="stylesheet" href="./reporte.css?v=20260811r8" />
+    <link rel="stylesheet" href="./styles-base.css?v=20260813r1" />
+    <link rel="stylesheet" href="./reporte.css?v=20260813r1" />
   </head>
   <body class="report-body">
     <div class="atmosphere" aria-hidden="true">
@@ -118,11 +118,30 @@
             <span>3</span>
             <h2>Indicadores</h2>
           </header>
+          <p class="section-note">
+            Se calculan solos con el resumen (pregunta 2) y el horario: no se pueden editar.
+          </p>
           <div class="grid-2">
-            <label class="field"><span>Tasa de interés % <span class="req">*</span></span><input type="number" min="0" step="0.1" inputmode="decimal" name="tasaInteres" required /></label>
-            <label class="field"><span>Tasa de conversión % <span class="req">*</span></span><input type="number" min="0" step="0.1" inputmode="decimal" name="tasaConversion" required /></label>
-            <label class="field"><span>Promedio ventas/hora <span class="req">*</span></span><input type="number" min="0" step="0.1" inputmode="decimal" name="promedioVentasHora" required /></label>
-            <label class="field"><span>Total dinámicas <span class="req">*</span></span><input type="number" min="0" inputmode="numeric" name="totalDinamicas" required /></label>
+            <label class="field field-computed">
+              <span>Tasa de interés % <span class="req">*</span></span>
+              <input type="number" min="0" step="0.1" inputmode="decimal" name="tasaInteres" required readonly tabindex="-1" value="0" aria-readonly="true" />
+              <small class="field-hint">Prospectos ÷ Abordados × 100</small>
+            </label>
+            <label class="field field-computed">
+              <span>Tasa de conversión % <span class="req">*</span></span>
+              <input type="number" min="0" step="0.1" inputmode="decimal" name="tasaConversion" required readonly tabindex="-1" value="0" aria-readonly="true" />
+              <small class="field-hint">Ventas ÷ Prospectos × 100</small>
+            </label>
+            <label class="field field-computed">
+              <span>Promedio ventas/hora <span class="req">*</span></span>
+              <input type="number" min="0" step="0.1" inputmode="decimal" name="promedioVentasHora" required readonly tabindex="-1" value="0" aria-readonly="true" />
+              <small class="field-hint">Ventas ÷ horas del horario</small>
+            </label>
+            <label class="field field-computed">
+              <span>Total dinámicas <span class="req">*</span></span>
+              <input type="number" min="0" inputmode="numeric" name="totalDinamicas" required readonly tabindex="-1" value="0" aria-readonly="true" />
+              <small class="field-hint">Igual a Dinámicas (pregunta 2)</small>
+            </label>
           </div>
         </section>
 
@@ -233,6 +252,6 @@
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
     <script src="./config.js?v=20260811r8"></script>
-    <script src="./app.js?v=20260811r8" defer></script>
+    <script src="./app.js?v=20260813r1" defer></script>
   </body>
 </html>

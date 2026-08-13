@@ -167,6 +167,28 @@
   box-shadow: 0 0 0 3px rgba(0, 151, 178, 0.14);
 }
 
+.field-computed input[readonly] {
+  background: #eef4fa;
+  color: #335066;
+  border-color: rgba(15, 36, 64, 0.1);
+  cursor: default;
+  box-shadow: none;
+}
+
+.field-computed input[readonly]:focus {
+  border-color: rgba(15, 36, 64, 0.1);
+  box-shadow: none;
+}
+
+.field-hint {
+  display: block;
+  margin-top: -0.15rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #5a7388;
+  line-height: 1.35;
+}
+
 .field input.is-invalid,
 .field textarea.is-invalid,
 .data-table input:not([type="radio"]):not([type="checkbox"]).is-invalid,

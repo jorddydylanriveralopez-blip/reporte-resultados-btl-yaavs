@@ -433,6 +433,52 @@
     });
   }
 
+  function numField(name) {
+    const el = form.elements.namedItem(name);
+    const v = Number(el && el.value !== "" ? el.value : NaN);
+    return Number.isFinite(v) ? v : 0;
+  }
+
+  function hoursFromSchedule() {
+    const start = String(form.elements.namedItem("horarioInicio")?.value || "").trim();
+    const end = String(form.elements.namedItem("horarioFin")?.value || "").trim();
+    if (!start || !end) return 0;
+    const [sh, sm] = start.split(":").map(Number);
+    const [eh, em] = end.split(":").map(Number);
+    if (![sh, sm, eh, em].every((n) => Number.isFinite(n))) return 0;
+    let mins = eh * 60 + em - (sh * 60 + sm);
+    if (mins < 0) mins += 24 * 60;
+    return mins / 60;
+  }
+
+  function round1(n) {
+    return Math.round(n * 10) / 10;
+  }
+
+  function setComputed(name, value) {
+    const el = form.elements.namedItem(name);
+    if (!el) return;
+    el.value = String(value);
+  }
+
+  /** Indicadores (pregunta 3) a partir del resumen (pregunta 2) + horario. */
+  function calcIndicadores() {
+    const abordados = numField("abordados");
+    const prospectos = numField("prospectos");
+    const ventas = numField("ventas");
+    const dinamicas = numField("dinamicas");
+    const hours = hoursFromSchedule();
+
+    const tasaInteres = abordados > 0 ? (prospectos / abordados) * 100 : 0;
+    const tasaConversion = prospectos > 0 ? (ventas / prospectos) * 100 : 0;
+    const promedioVentasHora = hours > 0 ? ventas / hours : 0;
+
+    setComputed("tasaInteres", round1(tasaInteres));
+    setComputed("tasaConversion", round1(tasaConversion));
+    setComputed("promedioVentasHora", round1(promedioVentasHora));
+    setComputed("totalDinamicas", Math.round(dinamicas));
+  }
+
   function collectAnswers() {
     const fd = new FormData(form);
     return {
@@ -483,10 +529,6 @@
       ["dinamicas", "dinamicas", "Captura el número de dinámicas (puedes poner 0)."],
       ["participantes", "participantes", "Captura el número de participantes (puedes poner 0)."],
       ["promocionales", "promocionales", "Captura el número de promocionales (puedes poner 0)."],
-      ["tasaInteres", "tasaInteres", "Captura la tasa de interés % (puedes poner 0)."],
-      ["tasaConversion", "tasaConversion", "Captura la tasa de conversión % (puedes poner 0)."],
-      ["promedioVentasHora", "promedioVentasHora", "Captura el promedio de ventas/hora (puedes poner 0)."],
-      ["totalDinamicas", "totalDinamicas", "Captura el total de dinámicas (puedes poner 0)."],
       ["observaciones", "observaciones", "Captura las observaciones (si no hay, escribe “Ninguna”)."],
     ];
 
@@ -599,16 +641,33 @@
     t?.closest?.(".material-card")?.classList.remove("is-invalid");
   });
 
+  form.addEventListener("input", (e) => {
+    const name = e.target?.name;
+    if (
+      name === "abordados" ||
+      name === "prospectos" ||
+      name === "ventas" ||
+      name === "dinamicas" ||
+      name === "horarioInicio" ||
+      name === "horarioFin"
+    ) {
+      calcIndicadores();
+    }
+  });
+
   form.addEventListener("change", (e) => {
     const t = e.target;
     if (t && t.classList) t.classList.remove("is-invalid");
     t?.closest?.(".yesno")?.classList.remove("is-invalid");
     t?.closest?.(".material-card")?.classList.remove("is-invalid");
+    const name = t?.name;
+    if (name === "horarioInicio" || name === "horarioFin") calcIndicadores();
   });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     hint.textContent = "";
+    calcIndicadores();
     const answers = collectAnswers();
     const err = validate(answers);
     if (err) {
@@ -669,6 +728,7 @@
     resetMaterialMerma();
     setIncidenciaDetalleOpen(false);
     updateMaterialTotals();
+    calcIndicadores();
     successPanel.hidden = true;
     form.hidden = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -680,4 +740,5 @@
   fillEvidencia();
   bindHayIncidencia();
   updateMaterialTotals();
+  calcIndicadores();
 })();
