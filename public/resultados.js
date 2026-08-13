@@ -48,49 +48,58 @@
     `;
   }
 
+  function fileTileHtml(f) {
+    const url = escapeAttr(f.url || "");
+    const name = escapeHtml(f.name || "archivo");
+    const mime = String(f.mime || "");
+    if (mime.startsWith("video/")) {
+      return `<a class="evidence-item video" href="${url}" target="_blank" rel="noopener">
+        <video src="${url}" muted playsinline></video>
+        <span>${name}</span>
+      </a>`;
+    }
+    if (mime.startsWith("image/")) {
+      return `<a class="evidence-item" href="${url}" target="_blank" rel="noopener">
+        <img src="${url}" alt="${name}" loading="lazy" />
+        <span>${name}</span>
+      </a>`;
+    }
+    const ext = String(f.name || "")
+      .split(".")
+      .pop()
+      ?.toUpperCase() || "FILE";
+    return `<a class="evidence-item file" href="${url}" target="_blank" rel="noopener" download>
+      <div class="evidence-file-tile">${escapeHtml(ext)}</div>
+      <span>${name}</span>
+    </a>`;
+  }
+
   function evidenceHtml(entryId) {
     const full = rawItems.find((x) => x.id === entryId);
-    const blocks = full?.answers?.evidencia;
-    if (!Array.isArray(blocks) || !blocks.length) {
+    const blocks = Array.isArray(full?.answers?.evidencia) ? full.answers.evidencia : [];
+    const materiales = Array.isArray(full?.answers?.materiales) ? full.answers.materiales : [];
+    const mermaBlocks = materiales
+      .filter((row) => Array.isArray(row?.evidenciasMerma) && row.evidenciasMerma.length)
+      .map((row) => ({
+        punto: `Merma/daño · ${row.material || "Material"}`,
+        files: row.evidenciasMerma,
+      }));
+    const allBlocks = [...blocks, ...mermaBlocks];
+
+    if (!allBlocks.length) {
       return `<p class="empty-evidence">Sin evidencias fotográficas en este reporte.</p>`;
     }
 
     return `
       <div class="evidence-blocks">
-        ${blocks
+        ${allBlocks
           .map((block) => {
             const files = Array.isArray(block.files) ? block.files : [];
             return `
             <div class="evidence-block">
               <h3>${escapeHtml(block.punto || "Evidencia")}</h3>
               <div class="evidence-gallery">
-                ${files
-                  .map((f) => {
-                    const url = escapeAttr(f.url || "");
-                    const name = escapeHtml(f.name || "archivo");
-                    const mime = String(f.mime || "");
-                    if (mime.startsWith("video/")) {
-                      return `<a class="evidence-item video" href="${url}" target="_blank" rel="noopener">
-                        <video src="${url}" muted playsinline></video>
-                        <span>${name}</span>
-                      </a>`;
-                    }
-                    if (mime.startsWith("image/")) {
-                      return `<a class="evidence-item" href="${url}" target="_blank" rel="noopener">
-                        <img src="${url}" alt="${name}" loading="lazy" />
-                        <span>${name}</span>
-                      </a>`;
-                    }
-                    const ext = String(f.name || "")
-                      .split(".")
-                      .pop()
-                      ?.toUpperCase() || "FILE";
-                    return `<a class="evidence-item file" href="${url}" target="_blank" rel="noopener" download>
-                      <div class="evidence-file-tile">${escapeHtml(ext)}</div>
-                      <span>${name}</span>
-                    </a>`;
-                  })
-                  .join("")}
+                ${files.map(fileTileHtml).join("")}
               </div>
             </div>`;
           })

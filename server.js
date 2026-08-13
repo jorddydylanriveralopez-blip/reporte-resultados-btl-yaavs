@@ -34,7 +34,7 @@ const dataFile = path.join(dataDir, "responses.json");
 const uploadsRoot = path.join(dataDir, "uploads");
 const SHEETS_WEBHOOK_URL = String(process.env.SHEETS_WEBHOOK_URL || "").trim();
 const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
-const MAX_FILES = 60;
+const MAX_FILES = 160;
 
 function safeFilename(name) {
   const base = path.basename(String(name || "archivo"));
@@ -139,9 +139,28 @@ function parseSubmitBody(req) {
   return body;
 }
 
-function saveEvidenceFiles(entryId, labels, files) {
+function moveUploadedFile(entryId, file, prefix, idx) {
   const dest = path.join(uploadsRoot, entryId);
   fs.mkdirSync(dest, { recursive: true });
+  const fname = `${Date.now()}_${prefix}_${idx}_${safeFilename(file.originalname)}`;
+  const target = path.join(dest, fname);
+  if (file.path && fs.existsSync(file.path)) {
+    fs.renameSync(file.path, target);
+  } else if (file.buffer) {
+    fs.writeFileSync(target, file.buffer);
+  } else {
+    return null;
+  }
+  return {
+    name: file.originalname || fname,
+    storedAs: fname,
+    url: `/uploads/${entryId}/${fname}`,
+    mime: file.mimetype || "application/octet-stream",
+    size: file.size || 0,
+  };
+}
+
+function saveEvidenceFiles(entryId, labels, files) {
   const byIndex = new Map();
 
   for (const file of files || []) {
@@ -152,22 +171,8 @@ function saveEvidenceFiles(entryId, labels, files) {
       Array.isArray(labels) && labels[idx] != null
         ? String(labels[idx])
         : `Punto ${idx + 1}`;
-    const fname = `${Date.now()}_${idx}_${safeFilename(file.originalname)}`;
-    const target = path.join(dest, fname);
-    if (file.path && fs.existsSync(file.path)) {
-      fs.renameSync(file.path, target);
-    } else if (file.buffer) {
-      fs.writeFileSync(target, file.buffer);
-    } else {
-      continue;
-    }
-    const item = {
-      name: file.originalname || fname,
-      storedAs: fname,
-      url: `/uploads/${entryId}/${fname}`,
-      mime: file.mimetype || "application/octet-stream",
-      size: file.size || 0,
-    };
+    const item = moveUploadedFile(entryId, file, "ev", idx);
+    if (!item) continue;
     if (!byIndex.has(idx)) byIndex.set(idx, { punto, files: [] });
     byIndex.get(idx).files.push(item);
   }
@@ -175,6 +180,32 @@ function saveEvidenceFiles(entryId, labels, files) {
   return [...byIndex.entries()]
     .sort((a, b) => a[0] - b[0])
     .map(([, value]) => value);
+}
+
+function attachMaterialEvidence(entryId, materiales, files) {
+  const list = Array.isArray(materiales) ? materiales.map((row) => ({ ...row })) : [];
+  const byIndex = new Map();
+
+  for (const file of files || []) {
+    const m = /^mat_ev_(\d+)$/.exec(file.fieldname || "");
+    if (!m) continue;
+    const idx = Number(m[1]);
+    const item = moveUploadedFile(entryId, file, "mat", idx);
+    if (!item) continue;
+    if (!byIndex.has(idx)) byIndex.set(idx, []);
+    byIndex.get(idx).push(item);
+  }
+
+  return list.map((row, idx) => {
+    const evidencias = byIndex.get(idx) || [];
+    const next = { ...row };
+    if (evidencias.length) next.evidenciasMerma = evidencias;
+    else delete next.evidenciasMerma;
+    if (next.mermaDanio !== "Sí") {
+      delete next.evidenciasMerma;
+    }
+    return next;
+  });
 }
 
 function readResponses() {
@@ -199,7 +230,18 @@ function stringifyComplex(v) {
       .map((row) => {
         if (row && typeof row === "object") {
           return Object.entries(row)
-            .map(([k, val]) => `${k}: ${val}`)
+            .map(([k, val]) => {
+              if (k === "evidenciasMerma" && Array.isArray(val)) {
+                const names = val
+                  .map((f) => (f && typeof f === "object" ? f.name || f.url || "" : String(f)))
+                  .filter(Boolean)
+                  .join(", ");
+                return names ? `evidenciasMerma: ${names}` : "";
+              }
+              if (val != null && typeof val === "object") return `${k}: ${JSON.stringify(val)}`;
+              return `${k}: ${val}`;
+            })
+            .filter(Boolean)
             .join(" | ");
         }
         return String(row);
@@ -406,6 +448,11 @@ app.post("/api/submit", (req, res) => {
       const entry = normalize(body);
       const labels = entry.answers?.evidenciaLabels;
       entry.answers.evidencia = saveEvidenceFiles(entry.id, labels, req.files);
+      entry.answers.materiales = attachMaterialEvidence(
+        entry.id,
+        entry.answers.materiales,
+        req.files,
+      );
       delete entry.answers.evidenciaLabels;
 
       const list = readResponses();

@@ -17,6 +17,8 @@
 
   /** @type {Record<number, File[]>} */
   const selectedFiles = {};
+  /** @type {Record<number, File[]>} */
+  const materialMermaFiles = {};
 
   function showToast(msg) {
     if (!toast) return;
@@ -34,7 +36,7 @@
 
   function clearInvalid() {
     form.querySelectorAll(".is-invalid").forEach((el) => el.classList.remove("is-invalid"));
-    form.querySelectorAll(".evidence-card.is-invalid").forEach((el) =>
+    form.querySelectorAll(".evidence-card.is-invalid, .material-card.is-invalid").forEach((el) =>
       el.classList.remove("is-invalid"),
     );
   }
@@ -42,7 +44,7 @@
   function markInvalid(el) {
     if (!el) return;
     el.classList.add("is-invalid");
-    const card = el.closest(".evidence-card");
+    const card = el.closest(".evidence-card, .material-card");
     if (card) card.classList.add("is-invalid");
   }
 
@@ -50,9 +52,10 @@
     const el =
       form.querySelector(".is-invalid input, .is-invalid textarea, input.is-invalid, textarea.is-invalid") ||
       form.querySelector(".evidence-card.is-invalid .evidence-pick-btn") ||
+      form.querySelector(".material-card.is-invalid .evidence-pick-btn") ||
       form.querySelector(".is-invalid");
     if (!el) return;
-    const target = el.closest(".card-section") || el;
+    const target = el.closest(".card-section, .material-card") || el;
     target.scrollIntoView({ behavior: "smooth", block: "center" });
     if (typeof el.focus === "function") {
       try {
@@ -84,21 +87,91 @@
       .join("");
   }
 
+  function setMaterialMermaOpen(idx, open) {
+    const panel = document.getElementById(`mat_merma_upload_${idx}`);
+    if (!panel) return;
+    panel.hidden = !open;
+    if (!open) {
+      panel.classList.remove("is-invalid");
+      materialMermaFiles[idx] = [];
+      renderMaterialMermaPreviews(idx);
+    }
+  }
+
   function fillMaterial() {
-    const tbody = document.querySelector("#materialTable tbody");
-    tbody.innerHTML = materiales
-      .map(
-        (name) => `
-      <tr data-material="${escapeAttr(name)}">
-        <td class="row-label" data-label="Material">${escapeHtml(name)}</td>
-        <td data-label="¿Cuántas tenemos en este momento?">
-          <input type="number" min="0" inputmode="numeric" required class="mat-cant" data-k="cantidad" aria-label="¿Cuántas tenemos en este momento? ${escapeAttr(name)}" />
-        </td>
-      </tr>`,
-      )
+    const box = document.getElementById("materialList");
+    box.innerHTML = materiales
+      .map((name, i) => {
+        materialMermaFiles[i] = [];
+        return `
+      <article class="material-card" data-idx="${i}" data-material="${escapeAttr(name)}">
+        <div class="material-card-head">
+          <strong>${escapeHtml(name)}</strong>
+        </div>
+        <div class="material-fields">
+          <label class="field">
+            <span>Fecha de entrega <span class="req">*</span></span>
+            <input type="date" required data-k="fechaEntrega" aria-label="Fecha de entrega ${escapeAttr(name)}" />
+          </label>
+          <label class="field">
+            <span>Cantidad entregada <span class="req">*</span></span>
+            <input type="number" min="0" inputmode="numeric" required class="mat-ent" data-k="cantidadEntregada" aria-label="Cantidad entregada ${escapeAttr(name)}" />
+          </label>
+          <label class="field">
+            <span>Cantidad utilizada <span class="req">*</span></span>
+            <input type="number" min="0" inputmode="numeric" required class="mat-uti" data-k="cantidadUtilizada" aria-label="Cantidad utilizada ${escapeAttr(name)}" />
+          </label>
+          <label class="field">
+            <span>Cantidad devuelta <span class="req">*</span></span>
+            <input type="number" min="0" inputmode="numeric" required class="mat-dev" data-k="cantidadDevuelta" aria-label="Cantidad devuelta ${escapeAttr(name)}" />
+          </label>
+        </div>
+        <fieldset class="material-merma">
+          <legend>¿Hay merma o daño? <span class="req">*</span></legend>
+          <div class="yesno" role="radiogroup" aria-label="Merma o daño ${escapeAttr(name)}">
+            <label><input type="radio" name="mat_merma_${i}" value="Sí" required /> Sí</label>
+            <label><input type="radio" name="mat_merma_${i}" value="No" required /> No</label>
+          </div>
+          <div class="material-merma-upload evidence-card" id="mat_merma_upload_${i}" hidden>
+            <div class="evidence-card-head">
+              <strong>Evidencias de merma/daño <span class="req" aria-hidden="true">*</span></strong>
+              <span class="evidence-count" id="mat_ev_count_${i}">0 archivos</span>
+            </div>
+            <label class="evidence-pick" for="mat_ev_file_${i}">
+              <input
+                type="file"
+                id="mat_ev_file_${i}"
+                accept="image/*,video/*"
+                multiple
+                hidden
+              />
+              <span class="evidence-pick-btn">Subir fotos o videos</span>
+              <span class="evidence-pick-hint">Fotos o videos · máx. ${MAX_FILES_PER_POINT} · ${MAX_FILE_MB} MB c/u</span>
+            </label>
+            <div class="evidence-previews" id="mat_ev_prev_${i}"></div>
+          </div>
+        </fieldset>
+      </article>`;
+      })
       .join("");
 
-    tbody.addEventListener("input", updateMaterialTotals);
+    box.addEventListener("input", (e) => {
+      if (e.target?.matches?.(".mat-ent, .mat-uti, .mat-dev")) updateMaterialTotals();
+    });
+
+    materiales.forEach((_, i) => {
+      const radios = box.querySelectorAll(`input[name="mat_merma_${i}"]`);
+      radios.forEach((r) =>
+        r.addEventListener("change", () => {
+          setMaterialMermaOpen(i, r.value === "Sí" && r.checked);
+          const card = box.querySelector(`.material-card[data-idx="${i}"]`);
+          card?.querySelector(".yesno")?.classList.remove("is-invalid");
+          card?.classList.remove("is-invalid");
+        }),
+      );
+      const input = document.getElementById(`mat_ev_file_${i}`);
+      input?.addEventListener("change", () => onMaterialMermaFilesChosen(i, input));
+    });
   }
 
   function updateMaterialTotals() {
@@ -107,8 +180,13 @@
         (acc, el) => acc + (Number(el.value) || 0),
         0,
       );
-    const totalEl = document.getElementById("matCantTotal");
-    if (totalEl) totalEl.textContent = String(sum(".mat-cant"));
+    const set = (id, n) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = String(n);
+    };
+    set("matEntTotal", sum(".mat-ent"));
+    set("matUtiTotal", sum(".mat-uti"));
+    set("matDevTotal", sum(".mat-dev"));
   }
 
   function setIncidenciaDetalleOpen(open) {
@@ -150,14 +228,8 @@
         <td class="row-label" data-label="Incidencia">${escapeHtml(name)}</td>
         <td data-label="Sí / No">
           <div class="yesno" role="radiogroup" aria-label="${escapeAttr(name)}">
-            <label class="yesno-opt" for="inc_${i}_si">
-              <input type="radio" id="inc_${i}_si" name="inc_${i}" value="Sí" required />
-              <span>Sí</span>
-            </label>
-            <label class="yesno-opt" for="inc_${i}_no">
-              <input type="radio" id="inc_${i}_no" name="inc_${i}" value="No" required />
-              <span>No</span>
-            </label>
+            <label><input type="radio" name="inc_${i}" value="Sí" required /> Sí</label>
+            <label><input type="radio" name="inc_${i}" value="No" required /> No</label>
           </div>
         </td>
         <td data-label="Descripción breve">
@@ -206,13 +278,21 @@
     });
   }
 
-  function onFilesChosen(idx, input) {
-    const incoming = [...(input.files || [])];
-    input.value = "";
-    const current = selectedFiles[idx] || [];
+  function appendIncomingFiles(current, incoming, opts = {}) {
     const next = [...current];
+    const acceptMediaOnly = Boolean(opts.acceptMediaOnly);
 
     for (const file of incoming) {
+      if (acceptMediaOnly) {
+        const ok =
+          file.type.startsWith("image/") ||
+          file.type.startsWith("video/") ||
+          /\.(jpe?g|png|gif|webp|heic|heif|mp4|mov|m4v|webm|avi|mkv)$/i.test(file.name);
+        if (!ok) {
+          showToast(`"${file.name}" no es foto ni video.`);
+          continue;
+        }
+      }
       if (file.size > MAX_FILE_MB * 1024 * 1024) {
         showToast(`"${file.name}" supera ${MAX_FILE_MB} MB.`);
         continue;
@@ -223,24 +303,40 @@
       }
       next.push(file);
     }
+    return next;
+  }
 
-    selectedFiles[idx] = next;
+  function onFilesChosen(idx, input) {
+    const incoming = [...(input.files || [])];
+    input.value = "";
+    selectedFiles[idx] = appendIncomingFiles(selectedFiles[idx] || [], incoming);
     const card = document.querySelector(`.evidence-card[data-idx="${idx}"]`);
-    if (next.length) card?.classList.remove("is-invalid");
+    if (selectedFiles[idx].length) card?.classList.remove("is-invalid");
     renderPreviews(idx);
   }
 
-  function renderPreviews(idx) {
-    const files = selectedFiles[idx] || [];
-    const countEl = document.getElementById(`ev_count_${idx}`);
-    const prev = document.getElementById(`ev_prev_${idx}`);
+  function onMaterialMermaFilesChosen(idx, input) {
+    const incoming = [...(input.files || [])];
+    input.value = "";
+    materialMermaFiles[idx] = appendIncomingFiles(materialMermaFiles[idx] || [], incoming, {
+      acceptMediaOnly: true,
+    });
+    const panel = document.getElementById(`mat_merma_upload_${idx}`);
+    if (materialMermaFiles[idx].length) {
+      panel?.classList.remove("is-invalid");
+      panel?.closest(".material-card")?.classList.remove("is-invalid");
+    }
+    renderMaterialMermaPreviews(idx);
+  }
+
+  function renderFilePreviews(files, countEl, prevEl, onRemove) {
     if (countEl) {
       countEl.textContent =
         files.length === 1 ? "1 archivo" : `${files.length} archivos`;
     }
-    if (!prev) return;
+    if (!prevEl) return;
 
-    prev.innerHTML = files
+    prevEl.innerHTML = files
       .map((file, fi) => {
         const url = URL.createObjectURL(file);
         const isVideo = file.type.startsWith("video/");
@@ -257,15 +353,38 @@
       })
       .join("");
 
-    prev.querySelectorAll(".evidence-remove").forEach((btn) => {
+    prevEl.querySelectorAll(".evidence-remove").forEach((btn) => {
       btn.addEventListener("click", () => {
         const thumb = btn.closest(".evidence-thumb");
         const fi = Number(thumb?.dataset.fi);
         if (Number.isNaN(fi)) return;
-        selectedFiles[idx] = (selectedFiles[idx] || []).filter((_, j) => j !== fi);
-        renderPreviews(idx);
+        onRemove(fi);
       });
     });
+  }
+
+  function renderPreviews(idx) {
+    renderFilePreviews(
+      selectedFiles[idx] || [],
+      document.getElementById(`ev_count_${idx}`),
+      document.getElementById(`ev_prev_${idx}`),
+      (fi) => {
+        selectedFiles[idx] = (selectedFiles[idx] || []).filter((_, j) => j !== fi);
+        renderPreviews(idx);
+      },
+    );
+  }
+
+  function renderMaterialMermaPreviews(idx) {
+    renderFilePreviews(
+      materialMermaFiles[idx] || [],
+      document.getElementById(`mat_ev_count_${idx}`),
+      document.getElementById(`mat_ev_prev_${idx}`),
+      (fi) => {
+        materialMermaFiles[idx] = (materialMermaFiles[idx] || []).filter((_, j) => j !== fi);
+        renderMaterialMermaPreviews(idx);
+      },
+    );
   }
 
   function escapeHtml(s) {
@@ -290,10 +409,17 @@
   }
 
   function collectMateriales() {
-    return [...document.querySelectorAll("#materialTable tbody tr")].map((tr) => ({
-      material: tr.dataset.material,
-      cantidad: tr.querySelector('[data-k="cantidad"]').value,
-    }));
+    return [...document.querySelectorAll("#materialList .material-card")].map((card, i) => {
+      const merma = card.querySelector(`input[name="mat_merma_${i}"]:checked`);
+      return {
+        material: card.dataset.material,
+        fechaEntrega: card.querySelector('[data-k="fechaEntrega"]').value,
+        cantidadEntregada: card.querySelector('[data-k="cantidadEntregada"]').value,
+        cantidadUtilizada: card.querySelector('[data-k="cantidadUtilizada"]').value,
+        cantidadDevuelta: card.querySelector('[data-k="cantidadDevuelta"]').value,
+        mermaDanio: merma ? merma.value : "",
+      };
+    });
   }
 
   function collectIncidencias() {
@@ -395,13 +521,32 @@
       }
     }
 
-    for (const row of answers.materiales) {
-      const tr = [...document.querySelectorAll("#materialTable tbody tr")].find(
-        (el) => el.dataset.material === row.material,
-      );
-      if (isBlank(row.cantidad)) {
-        markInvalid(tr?.querySelector('[data-k="cantidad"]'));
-        return `En material promocional, indica cuántas “${row.material}” tienes ahora (puedes poner 0).`;
+    for (let i = 0; i < answers.materiales.length; i++) {
+      const row = answers.materiales[i];
+      const card = document.querySelector(`#materialList .material-card[data-idx="${i}"]`);
+      if (isBlank(row.fechaEntrega)) {
+        markInvalid(card?.querySelector('[data-k="fechaEntrega"]'));
+        return `En material promocional, captura la fecha de entrega de “${row.material}”.`;
+      }
+      if (isBlank(row.cantidadEntregada)) {
+        markInvalid(card?.querySelector('[data-k="cantidadEntregada"]'));
+        return `En material promocional, captura la cantidad entregada de “${row.material}” (puedes poner 0).`;
+      }
+      if (isBlank(row.cantidadUtilizada)) {
+        markInvalid(card?.querySelector('[data-k="cantidadUtilizada"]'));
+        return `En material promocional, captura la cantidad utilizada de “${row.material}” (puedes poner 0).`;
+      }
+      if (isBlank(row.cantidadDevuelta)) {
+        markInvalid(card?.querySelector('[data-k="cantidadDevuelta"]'));
+        return `En material promocional, captura la cantidad devuelta de “${row.material}” (puedes poner 0).`;
+      }
+      if (isBlank(row.mermaDanio)) {
+        markInvalid(card?.querySelector(".yesno"));
+        return `En material promocional, indica si hay merma o daño en “${row.material}”.`;
+      }
+      if (row.mermaDanio === "Sí" && !(materialMermaFiles[i] || []).length) {
+        markInvalid(document.getElementById(`mat_merma_upload_${i}`));
+        return `Sube al menos una foto o video de merma/daño de “${row.material}”.`;
       }
     }
 
@@ -439,16 +584,26 @@
     });
   }
 
+  function resetMaterialMerma() {
+    materiales.forEach((_, i) => {
+      materialMermaFiles[i] = [];
+      setMaterialMermaOpen(i, false);
+      renderMaterialMermaPreviews(i);
+    });
+  }
+
   form.addEventListener("input", (e) => {
     const t = e.target;
     if (t && t.classList) t.classList.remove("is-invalid");
     t?.closest?.(".yesno")?.classList.remove("is-invalid");
+    t?.closest?.(".material-card")?.classList.remove("is-invalid");
   });
 
   form.addEventListener("change", (e) => {
     const t = e.target;
     if (t && t.classList) t.classList.remove("is-invalid");
     t?.closest?.(".yesno")?.classList.remove("is-invalid");
+    t?.closest?.(".material-card")?.classList.remove("is-invalid");
   });
 
   form.addEventListener("submit", async (e) => {
@@ -474,6 +629,12 @@
     evidencia.forEach((_, i) => {
       (selectedFiles[i] || []).forEach((file) => {
         payload.append(`ev_${i}`, file, file.name);
+      });
+    });
+
+    materiales.forEach((_, i) => {
+      (materialMermaFiles[i] || []).forEach((file) => {
+        payload.append(`mat_ev_${i}`, file, file.name);
       });
     });
 
@@ -505,6 +666,7 @@
     form.reset();
     clearInvalid();
     resetEvidence();
+    resetMaterialMerma();
     setIncidenciaDetalleOpen(false);
     updateMaterialTotals();
     successPanel.hidden = true;
