@@ -159,9 +159,37 @@
     return Array.isArray(full?.answers?.materiales) ? full.answers.materiales : [];
   }
 
+  function catalogMaterials() {
+    const fromCfg = window.YAAVS_REPORT_OPTIONS?.materiales;
+    if (Array.isArray(fromCfg) && fromCfg.length) return fromCfg.map((m) => String(m));
+    return [
+      "Pelota de esponja",
+      "Cilindro AT&T",
+      "Llavero 1",
+      "Tarjetero anillo",
+      "Plumas cartón",
+      "Plumas blancas",
+      "Plumas negras",
+      "Anillo celular",
+    ];
+  }
+
   function buildInventory(list) {
     const byMaterial = new Map();
     const movements = [];
+
+    // Siempre arrancar con el catálogo de productos (aunque no haya reportes aún)
+    catalogMaterials().forEach((name) => {
+      byMaterial.set(name, {
+        material: name,
+        entregada: 0,
+        utilizada: 0,
+        devuelta: 0,
+        mermaSi: 0,
+        reportes: 0,
+        inCatalog: true,
+      });
+    });
 
     const sorted = [...list].sort((a, b) => {
       const da = parseDate(a.receivedAt || a.timestamp)?.getTime() || 0;
@@ -201,6 +229,7 @@
             devuelta: 0,
             mermaSi: 0,
             reportes: 0,
+            inCatalog: false,
           });
         }
         const agg = byMaterial.get(row.material);
@@ -212,12 +241,20 @@
       });
     });
 
+    const catalog = catalogMaterials();
     const summary = [...byMaterial.values()]
       .map((row) => ({
         ...row,
         saldo: row.entregada - row.utilizada,
       }))
-      .sort((a, b) => a.material.localeCompare(b.material, "es"));
+      .sort((a, b) => {
+        const ia = catalog.indexOf(a.material);
+        const ib = catalog.indexOf(b.material);
+        if (ia >= 0 && ib >= 0) return ia - ib;
+        if (ia >= 0) return -1;
+        if (ib >= 0) return 1;
+        return a.material.localeCompare(b.material, "es");
+      });
 
     const totals = summary.reduce(
       (acc, row) => {
@@ -262,22 +299,14 @@
       <div class="inv-kpi"><span>Saldo (ent − uti)</span><strong>${t.saldo}</strong></div>
     `;
 
-    if (!inv.summary.length) {
-      table.hidden = true;
-      empty.hidden = false;
-      foot.innerHTML = "";
-      body.innerHTML = "";
-      movesEl.innerHTML = `<p class="inventory-empty">Aún no hay movimientos de material.</p>`;
-      return;
-    }
-
+    // Siempre mostrar tabla por producto (aunque todo esté en 0)
     table.hidden = false;
     empty.hidden = true;
     body.innerHTML = inv.summary
       .map(
         (row) => `
-      <tr>
-        <td>${escapeHtml(row.material)}</td>
+      <tr class="${row.reportes ? "" : "is-zero"}">
+        <td><strong>${escapeHtml(row.material)}</strong></td>
         <td class="num">${row.entregada}</td>
         <td class="num">${row.utilizada}</td>
         <td class="num">${row.devuelta}</td>
@@ -295,8 +324,13 @@
         <td class="num">${t.devuelta}</td>
         <td class="num">${t.saldo}</td>
         <td class="num">${t.mermaSi}</td>
-        <td class="num">${inv.summary.length} mats</td>
+        <td class="num">${inv.summary.length} productos</td>
       </tr>`;
+
+    if (!inv.movements.length) {
+      movesEl.innerHTML = `<p class="inventory-empty">Aún no hay movimientos. Cuando entre un reporte, aquí verás el detalle por activación.</p>`;
+      return;
+    }
 
     movesEl.innerHTML = inv.movements
       .map((m) => {
@@ -330,7 +364,7 @@
           <table class="movement-mini">
             <thead>
               <tr>
-                <th>Material</th>
+                <th>Producto</th>
                 <th class="num">Ent</th>
                 <th class="num">Uti</th>
                 <th class="num">Dev</th>
@@ -400,7 +434,7 @@
       return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
     const lines = [
-      ["Material", "Entregada", "Utilizada", "Devuelta", "Saldo", "Merma (reportes)", "Reportes"]
+      ["Producto", "Entregada", "Utilizada", "Devuelta", "Saldo", "Merma (reportes)", "Reportes"]
         .map(esc)
         .join(","),
       ...inv.summary.map((r) =>

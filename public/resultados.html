@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./resultados.css?v=20260813btl3" />
+    <link rel="stylesheet" href="./resultados.css?v=20260813btl4" />
   </head>
   <body>
     <div class="shell">
@@ -137,9 +137,9 @@
         <section class="inventory" aria-label="Inventario de material promocional">
           <div class="inventory-head">
             <div>
-              <h2>Inventario · Material promocional</h2>
+              <h2>Inventario · Material promocional por producto</h2>
               <p>
-                Totales y movimientos de la pregunta 5 (entregada / utilizada / devuelta) para Trade.
+                Desglose por cada producto de la pregunta 5 (entregada / utilizada / devuelta / saldo) para Trade.
                 Respeta los filtros.
               </p>
             </div>
@@ -152,7 +152,7 @@
             <table class="inventory-table" id="inventoryTable">
               <thead>
                 <tr>
-                  <th>Material</th>
+                  <th>Producto</th>
                   <th class="num">Entregada</th>
                   <th class="num">Utilizada</th>
                   <th class="num">Devuelta</th>
@@ -164,7 +164,7 @@
               <tbody id="inventoryBody"></tbody>
               <tfoot id="inventoryFoot"></tfoot>
             </table>
-            <p class="inventory-empty" id="inventoryEmpty" hidden>Sin materiales en los reportes filtrados.</p>
+            <p class="inventory-empty" id="inventoryEmpty" hidden>Sin movimientos aún; se muestran los productos en 0.</p>
           </div>
           <div class="inventory-movements">
             <div class="inventory-movements-head">
@@ -199,6 +199,7 @@
     </dialog>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
-    <script src="./resultados.js?v=20260813btl3" defer></script>
+    <script src="./config.js?v=20260813btl4"></script>
+    <script src="./resultados.js?v=20260813btl4" defer></script>
   </body>
 </html>

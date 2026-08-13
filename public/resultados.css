@@ -405,6 +405,15 @@ a {
   background: rgba(0, 160, 200, 0.05);
 }
 
+.inventory-table tbody tr.is-zero td {
+  color: var(--muted);
+}
+
+.inventory-table tbody tr.is-zero td strong {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
 .inventory-table tfoot td {
   font-weight: 700;
   background: #eef6fa;
