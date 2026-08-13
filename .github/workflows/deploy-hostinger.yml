@@ -39,6 +39,15 @@ jobs:
       - name: Install upload deps
         run: npm install --no-save axios form-data tus-js-client
 
+      - name: Backup live responses
+        env:
+          HOSTINGER_DOMAIN: ${{ secrets.HOSTINGER_DOMAIN }}
+        run: |
+          DOMAIN="${HOSTINGER_DOMAIN:-lightslategrey-deer-478072.hostingersite.com}"
+          curl -fsS --connect-timeout 10 --max-time 25 "https://${DOMAIN}/api/responses" -o responses-live.json \
+            || echo '{"raw":[],"responses":[]}' > responses-live.json
+          python3 -c "import json; d=json.load(open('responses-live.json')); print('backed up', len(d.get('raw') or d.get('responses') or d.get('items') or []))"
+
       - name: Upload archive and trigger Node build
         env:
           HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
@@ -246,3 +255,65 @@ jobs:
             process.exit(1);
           });
           NODE
+
+      - name: Restore live responses
+        if: always()
+        env:
+          HOSTINGER_DOMAIN: ${{ secrets.HOSTINGER_DOMAIN }}
+          RESET_KEY: ${{ secrets.RESET_KEY }}
+        run: |
+          if [ ! -f responses-live.json ]; then echo "no backup file"; exit 0; fi
+          DOMAIN="${HOSTINGER_DOMAIN:-lightslategrey-deer-478072.hostingersite.com}"
+          export HOSTINGER_DOMAIN="$DOMAIN"
+          export RESET_KEY="${RESET_KEY:-yaavs-reset}"
+          for i in $(seq 1 24); do
+            code=$(curl -s -o /tmp/health.json -w "%{http_code}" "https://${DOMAIN}/api/health" || true)
+            if [ "$code" = "200" ]; then echo "health ok"; break; fi
+            echo "waiting health ($i) code=$code"
+            sleep 5
+          done
+          python3 <<'PY'
+          import json, os, time, urllib.request
+          domain = os.environ.get("HOSTINGER_DOMAIN") or "lightslategrey-deer-478072.hostingersite.com"
+          key = os.environ.get("RESET_KEY") or "yaavs-reset"
+          data = json.load(open("responses-live.json"))
+          items = data.get("raw") or []
+          if not items:
+              flat = data.get("responses") or data.get("items") or []
+              items = [
+                  {
+                      "id": r.get("id"),
+                      "receivedAt": r.get("receivedAt"),
+                      "timestamp": r.get("timestamp"),
+                      "answers": {
+                          k: v for k, v in r.items()
+                          if k not in ("id", "receivedAt", "timestamp")
+                      },
+                  }
+                  for r in flat
+              ]
+          if not items:
+              print("nothing to restore")
+              raise SystemExit(0)
+          payload = {"key": key, "mode": "replace", "responses": items}
+          for attempt in range(8):
+              try:
+                  req = urllib.request.Request(
+                      f"https://{domain}/api/import",
+                      data=json.dumps(payload).encode(),
+                      headers={"Content-Type": "application/json"},
+                      method="POST",
+                  )
+                  with urllib.request.urlopen(req, timeout=60) as res:
+                      body = res.read().decode()
+                      print("import", res.status, body[:400])
+                      if res.status < 300:
+                          raise SystemExit(0)
+              except SystemExit:
+                  raise
+              except Exception as e:
+                  print("import failed", e)
+                  time.sleep(3)
+          print("WARN: could not restore via /api/import")
+          raise SystemExit(1)
+          PY

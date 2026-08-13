@@ -515,6 +515,44 @@ app.post("/api/reset", (req, res) => {
   }
 });
 
+// Restaura respuestas (p. ej. tras un deploy que vació data/)
+app.post("/api/import", (req, res) => {
+  try {
+    const key = String(req.body?.key || req.query?.key || "").trim();
+    const expected = String(process.env.RESET_KEY || "yaavs-reset").trim();
+    if (!key || key !== expected) {
+      return res.status(403).json({ ok: false, error: "No autorizado" });
+    }
+    const incoming = Array.isArray(req.body?.responses)
+      ? req.body.responses
+      : Array.isArray(req.body?.raw)
+        ? req.body.raw
+        : Array.isArray(req.body?.items)
+          ? req.body.items
+          : [];
+    const mode = String(req.body?.mode || "merge").trim(); // merge | replace
+    const normalized = incoming.map((row) => {
+      if (row && row.answers && typeof row.answers === "object") return normalize(row);
+      const { id, receivedAt, timestamp, website, ...answers } = row || {};
+      return normalize({ id, receivedAt, timestamp, answers });
+    });
+    let list = mode === "replace" ? [] : readResponses();
+    const byId = new Map(list.map((r) => [r.id, r]));
+    normalized.forEach((entry) => {
+      byId.set(entry.id, entry);
+    });
+    list = [...byId.values()].sort((a, b) => {
+      const ta = new Date(a.receivedAt || a.timestamp || 0).getTime();
+      const tb = new Date(b.receivedAt || b.timestamp || 0).getTime();
+      return tb - ta;
+    });
+    writeResponses(list);
+    res.json({ ok: true, count: list.length, imported: normalized.length, mode });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message || "No se pudo importar" });
+  }
+});
+
 app.get("/resultados", (_req, res) => {
   res.sendFile(path.join(publicDir, "resultados.html"));
 });
