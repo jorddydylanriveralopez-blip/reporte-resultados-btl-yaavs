@@ -75,14 +75,8 @@
         (name) => `
       <tr data-servicio="${escapeAttr(name)}">
         <td class="row-label" data-label="Servicio">${escapeHtml(name)}</td>
-        <td data-label="Interesados">
-          <input type="number" min="0" inputmode="numeric" required data-k="interesados" aria-label="Interesados ${escapeAttr(name)}" />
-        </td>
-        <td data-label="Operaciones">
-          <input type="number" min="0" inputmode="numeric" required data-k="operaciones" aria-label="Operaciones ${escapeAttr(name)}" />
-        </td>
-        <td data-label="Motivo de no cierre">
-          <input type="text" required data-k="motivo" placeholder="Motivo" aria-label="Motivo ${escapeAttr(name)}" />
+        <td data-label="Ventas por producto">
+          <input type="number" min="0" inputmode="numeric" required data-k="ventasPorProducto" aria-label="Ventas por producto ${escapeAttr(name)}" />
         </td>
       </tr>`,
       )
@@ -404,9 +398,7 @@
   function collectComerciales() {
     return [...document.querySelectorAll("#comercialTable tbody tr")].map((tr) => ({
       servicio: tr.dataset.servicio,
-      interesados: tr.querySelector('[data-k="interesados"]').value,
-      operaciones: tr.querySelector('[data-k="operaciones"]').value,
-      motivo: tr.querySelector('[data-k="motivo"]').value,
+      ventasPorProducto: tr.querySelector('[data-k="ventasPorProducto"]').value,
     }));
   }
 
@@ -551,17 +543,9 @@
       const tr = [...document.querySelectorAll("#comercialTable tbody tr")].find(
         (el) => el.dataset.servicio === row.servicio,
       );
-      if (isBlank(row.interesados)) {
-        markInvalid(tr?.querySelector('[data-k="interesados"]'));
-        return `En resultados comerciales, captura interesados de “${row.servicio}” (puedes poner 0).`;
-      }
-      if (isBlank(row.operaciones)) {
-        markInvalid(tr?.querySelector('[data-k="operaciones"]'));
-        return `En resultados comerciales, captura operaciones de “${row.servicio}” (puedes poner 0).`;
-      }
-      if (isBlank(row.motivo)) {
-        markInvalid(tr?.querySelector('[data-k="motivo"]'));
-        return `En resultados comerciales, captura el motivo de “${row.servicio}”.`;
+      if (isBlank(row.ventasPorProducto)) {
+        markInvalid(tr?.querySelector('[data-k="ventasPorProducto"]'));
+        return `En resultados comerciales, captura ventas por producto de “${row.servicio}” (puedes poner 0).`;
       }
     }
 

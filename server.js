@@ -253,6 +253,13 @@ function writeResponses(list) {
 
 function stringifyComplex(v) {
   if (v == null) return "";
+  const labelMap = {
+    servicio: "servicio",
+    ventasPorProducto: "ventas por producto",
+    interesados: "interesados",
+    operaciones: "operaciones",
+    motivo: "motivo",
+  };
   if (Array.isArray(v)) {
     return v
       .map((row) => {
@@ -267,7 +274,8 @@ function stringifyComplex(v) {
                 return names ? `evidenciasMerma: ${names}` : "";
               }
               if (val != null && typeof val === "object") return `${k}: ${JSON.stringify(val)}`;
-              return `${k}: ${val}`;
+              const label = labelMap[k] || k;
+              return `${label}: ${val}`;
             })
             .filter(Boolean)
             .join(" | ");
