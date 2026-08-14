@@ -566,6 +566,24 @@ a {
   font-variant-numeric: tabular-nums;
 }
 
+.modal-mat-table tfoot th,
+.modal-mat-table tfoot td {
+  border-bottom: 0;
+  padding-top: 0.65rem;
+  color: var(--navy);
+  font-weight: 800;
+}
+
+.modal-materials h3 .meta {
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.ventas-producto {
+  margin-bottom: 1.25rem;
+}
+
 .chart-card {
   background: rgba(255, 255, 255, 0.94);
   border-radius: 18px;

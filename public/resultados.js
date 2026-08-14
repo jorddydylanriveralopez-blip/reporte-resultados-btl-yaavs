@@ -33,6 +33,8 @@
 
   let lastInventoryKey = "";
   let lastInventory = { summary: [], totals: {}, movements: [] };
+  let lastVentasProdKey = "";
+  let lastVentasProd = { summary: [], total: 0 };
 
   const PIE_COLORS = [
     "#00a0c8",
@@ -157,6 +159,167 @@
   function materialsOf(entryId) {
     const full = rawItems.find((x) => x.id === entryId);
     return Array.isArray(full?.answers?.materiales) ? full.answers.materiales : [];
+  }
+
+  function comercialesOf(entryId) {
+    const full = rawItems.find((x) => x.id === entryId);
+    return Array.isArray(full?.answers?.comerciales) ? full.answers.comerciales : [];
+  }
+
+  function ventaPorProductoOf(row) {
+    if (!row || typeof row !== "object") return 0;
+    if (row.ventasPorProducto != null && String(row.ventasPorProducto).trim() !== "") {
+      return toNum(row.ventasPorProducto);
+    }
+    // Reportes viejos: interesados / operaciones
+    if (row.interesados != null && String(row.interesados).trim() !== "") return toNum(row.interesados);
+    if (row.operaciones != null && String(row.operaciones).trim() !== "") return toNum(row.operaciones);
+    return 0;
+  }
+
+  function catalogComerciales() {
+    const fromCfg = window.YAAVS_REPORT_OPTIONS?.comerciales;
+    if (Array.isArray(fromCfg) && fromCfg.length) return fromCfg.map((m) => String(m));
+    return [
+      "Línea nueva con SIM",
+      "eSIM",
+      "Portabilidad",
+      "Plan pospago",
+      "Recargas",
+      "Equipos / accesorios",
+      "No aplica / Otro",
+    ];
+  }
+
+  function sumVentasProducto(entryId) {
+    return comercialesOf(entryId).reduce((acc, row) => acc + ventaPorProductoOf(row), 0);
+  }
+
+  function buildVentasProducto(list) {
+    const order = catalogComerciales();
+    const map = new Map(order.map((name) => [name, { servicio: name, ventas: 0, reportes: 0 }]));
+    list.forEach((r) => {
+      const rows = comercialesOf(r.id);
+      const seen = new Set();
+      rows.forEach((row) => {
+        const name = String(row.servicio || "").trim() || "Sin servicio";
+        if (!map.has(name)) map.set(name, { servicio: name, ventas: 0, reportes: 0 });
+        const n = ventaPorProductoOf(row);
+        const slot = map.get(name);
+        slot.ventas += n;
+        if (n > 0 && !seen.has(name)) {
+          slot.reportes += 1;
+          seen.add(name);
+        }
+      });
+    });
+    const summary = [...map.values()].sort((a, b) => {
+      const ia = order.indexOf(a.servicio);
+      const ib = order.indexOf(b.servicio);
+      if (ia >= 0 || ib >= 0) return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
+      return b.ventas - a.ventas || a.servicio.localeCompare(b.servicio, "es");
+    });
+    const total = summary.reduce((acc, row) => acc + row.ventas, 0);
+    return { summary, total };
+  }
+
+  function renderVentasProducto(list) {
+    const kpis = document.getElementById("ventasProdKpis");
+    const body = document.getElementById("ventasProdBody");
+    const foot = document.getElementById("ventasProdFoot");
+    const empty = document.getElementById("ventasProdEmpty");
+    const table = document.getElementById("ventasProdTable");
+    if (!kpis || !body || !foot || !empty || !table) return;
+
+    const data = buildVentasProducto(list);
+    const key = JSON.stringify(data);
+    if (key === lastVentasProdKey) return;
+    lastVentasProdKey = key;
+    lastVentasProd = data;
+
+    const withSales = data.summary.filter((r) => r.ventas > 0).length;
+    kpis.innerHTML = `
+      <div class="metric"><span>Total ventas producto</span><strong>${data.total}</strong></div>
+      <div class="metric"><span>Servicios con venta</span><strong>${withSales}</strong></div>
+      <div class="metric"><span>Reportes</span><strong>${list.length}</strong></div>
+    `;
+
+    empty.hidden = true;
+    table.hidden = false;
+    body.innerHTML = data.summary
+      .map(
+        (row) => `
+      <tr>
+        <td>${escapeHtml(row.servicio)}</td>
+        <td class="num"><strong>${row.ventas}</strong></td>
+        <td class="num">${row.reportes}</td>
+      </tr>`,
+      )
+      .join("");
+    foot.innerHTML = `
+      <tr>
+        <th>Total</th>
+        <th class="num">${data.total}</th>
+        <th class="num">—</th>
+      </tr>`;
+  }
+
+  function downloadVentasProductoCsv() {
+    const list = filtered();
+    const data = buildVentasProducto(list);
+    const headers = ["Servicio promovido", "Ventas por producto", "Reportes con venta"];
+    const lines = [headers.join(",")];
+    const esc = (v) => {
+      const s = String(v ?? "");
+      return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    data.summary.forEach((row) => {
+      lines.push([row.servicio, row.ventas, row.reportes].map(esc).join(","));
+    });
+    lines.push(["TOTAL", data.total, ""].map(esc).join(","));
+    const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Ventas_por_producto_BTL_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function comercialesModalHtml(entryId) {
+    const rows = comercialesOf(entryId);
+    if (!rows.length) {
+      return `<div class="modal-materials"><h3>Ventas por producto</h3><p class="empty-evidence">Sin datos comerciales en este reporte.</p></div>`;
+    }
+    const total = rows.reduce((acc, row) => acc + ventaPorProductoOf(row), 0);
+    const body = rows
+      .map((row) => {
+        const n = ventaPorProductoOf(row);
+        return `<tr>
+          <td>${escapeHtml(row.servicio || "—")}</td>
+          <td class="num"><strong>${n}</strong></td>
+        </tr>`;
+      })
+      .join("");
+    return `
+      <div class="modal-materials">
+        <h3>Ventas por producto <span class="meta">· total ${total}</span></h3>
+        <table class="modal-mat-table">
+          <thead>
+            <tr>
+              <th>Servicio promovido</th>
+              <th class="num">Ventas</th>
+            </tr>
+          </thead>
+          <tbody>${body}</tbody>
+          <tfoot>
+            <tr>
+              <th>Total</th>
+              <th class="num">${total}</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>`;
   }
 
   function catalogMaterials() {
@@ -556,11 +719,13 @@
   }
 
   function renderMetrics(list) {
+    const vp = buildVentasProducto(list);
     metricsEl.innerHTML = `
       <div class="metric"><span>Total</span><strong>${list.length}</strong></div>
       <div class="metric"><span>Interesados</span><strong>${sum(list, "abordados")}</strong></div>
       <div class="metric"><span>Prospectos</span><strong>${sum(list, "prospectos")}</strong></div>
       <div class="metric"><span>Ventas</span><strong>${sum(list, "ventas")}</strong></div>
+      <div class="metric"><span>Ventas por producto</span><strong>${vp.total}</strong></div>
       <div class="metric"><span>Con incidencia</span><strong>${
         list.filter((r) => String(r.hayIncidencia).toLowerCase() === "sí").length
       }</strong></div>
@@ -709,7 +874,7 @@
             )}</p>
             <p class="item-meta">Interesados ${escapeHtml(r.abordados || "0")} · Prospectos ${escapeHtml(
               r.prospectos || "0",
-            )}${ev ? ` · ${ev} evidencia${ev === 1 ? "" : "s"}` : ""}</p>
+            )} · Ventas producto ${sumVentasProducto(r.id)}${ev ? ` · ${ev} evidencia${ev === 1 ? "" : "s"}` : ""}</p>
             <p class="item-date">${formatDate(r.receivedAt || r.timestamp)}</p>
           </div>
         </button>
@@ -735,11 +900,13 @@
   }
 
   function metricsKey(list) {
+    const vp = buildVentasProducto(list);
     return [
       list.length,
       sum(list, "abordados"),
       sum(list, "prospectos"),
       sum(list, "ventas"),
+      vp.total,
       list.filter((r) => String(r.hayIncidencia).toLowerCase() === "sí").length,
       formatTime(lastSync),
     ].join("|");
@@ -761,6 +928,7 @@
     }
 
     renderCharts(list);
+    renderVentasProducto(list);
     renderInventory(list);
 
     const bKey = boardKey(list);
@@ -929,12 +1097,13 @@
     modalBody.innerHTML =
       Object.keys(LABELS)
         .map((key) => {
-          if (key === "materiales") return "";
+          if (key === "materiales" || key === "comerciales") return "";
           const val = r[key];
           if (val == null || String(val).trim() === "") return "";
           return `<div class="modal-row"><b>${LABELS[key]}</b><span>${escapeHtml(val)}</span></div>`;
         })
         .join("") +
+      comercialesModalHtml(r.id) +
       materialsModalHtml(r.id) +
       evidenceHtml(r.id);
     modalActions.innerHTML = `
@@ -1062,6 +1231,7 @@
   document.getElementById("btnRefresh").addEventListener("click", load);
   document.getElementById("btnClear").addEventListener("click", clearFilters);
   document.getElementById("btnInvCsv")?.addEventListener("click", downloadInventoryCsv);
+  document.getElementById("btnVentasProdCsv")?.addEventListener("click", downloadVentasProductoCsv);
 
   document.getElementById("btnExcel").addEventListener("click", async () => {
     const btn = document.getElementById("btnExcel");
