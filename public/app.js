@@ -16,6 +16,9 @@
   const MAX_FILE_MB = 100;
   const IMAGE_MAX_EDGE = 1600;
   const IMAGE_JPEG_QUALITY = 0.72;
+  const MATERIAL_ENT_DEFAULT = Number(cfg.materialEntregadaDefault) || 20;
+  const MATERIAL_ENT_PASSWORD = String(cfg.materialEntregadaPassword || "Noemi2026");
+  let materialEntregadaUnlocked = false;
 
   /** @type {Record<number, File[]>} */
   const selectedFiles = {};
@@ -109,17 +112,47 @@
             <span>Fecha de entrega <span class="req">*</span></span>
             <input type="date" required data-k="fechaEntrega" aria-label="Fecha de entrega ${escapeAttr(name)}" />
           </label>
-          <label class="field">
+          <label class="field field-entregada">
             <span>Cantidad entregada <span class="req">*</span></span>
-            <input type="number" min="0" inputmode="numeric" required class="mat-ent" data-k="cantidadEntregada" aria-label="Cantidad entregada ${escapeAttr(name)}" />
-          </label>
-          <label class="field">
-            <span>Cantidad utilizada <span class="req">*</span></span>
-            <input type="number" min="0" inputmode="numeric" required class="mat-uti" data-k="cantidadUtilizada" aria-label="Cantidad utilizada ${escapeAttr(name)}" />
+            <div class="entregada-row">
+              <input
+                type="number"
+                min="0"
+                inputmode="numeric"
+                required
+                class="mat-ent"
+                data-k="cantidadEntregada"
+                value="${MATERIAL_ENT_DEFAULT}"
+                readonly
+                aria-readonly="true"
+                aria-label="Cantidad entregada ${escapeAttr(name)}"
+              />
+              <button type="button" class="btn-unlock-ent" data-unlock-ent="${i}" title="Desbloquear con contraseña">
+                Cambiar
+              </button>
+            </div>
+            <small class="field-hint">Por defecto ${MATERIAL_ENT_DEFAULT}. Para editar se pide contraseña.</small>
           </label>
           <label class="field">
             <span>Cantidad devuelta <span class="req">*</span></span>
             <input type="number" min="0" inputmode="numeric" required class="mat-dev" data-k="cantidadDevuelta" aria-label="Cantidad devuelta ${escapeAttr(name)}" />
+          </label>
+          <label class="field field-computed">
+            <span>Cantidad utilizada <span class="req">*</span></span>
+            <input
+              type="number"
+              min="0"
+              inputmode="numeric"
+              required
+              class="mat-uti"
+              data-k="cantidadUtilizada"
+              value="0"
+              readonly
+              tabindex="-1"
+              aria-readonly="true"
+              aria-label="Cantidad utilizada ${escapeAttr(name)}"
+            />
+            <small class="field-hint">Se calcula sola: entregada − devuelta</small>
           </label>
         </div>
         <fieldset class="material-merma">
@@ -152,7 +185,17 @@
       .join("");
 
     box.addEventListener("input", (e) => {
-      if (e.target?.matches?.(".mat-ent, .mat-uti, .mat-dev")) updateMaterialTotals();
+      if (e.target?.matches?.(".mat-ent, .mat-dev")) {
+        const card = e.target.closest(".material-card");
+        if (card) calcMaterialUtilizada(card);
+        updateMaterialTotals();
+      }
+    });
+
+    box.addEventListener("click", (e) => {
+      const btn = e.target?.closest?.("[data-unlock-ent]");
+      if (!btn) return;
+      unlockMaterialEntregada(btn);
     });
 
     materiales.forEach((_, i) => {
@@ -167,7 +210,57 @@
       );
       const input = document.getElementById(`mat_ev_file_${i}`);
       input?.addEventListener("change", () => onMaterialMermaFilesChosen(i, input));
+      const card = box.querySelector(`.material-card[data-idx="${i}"]`);
+      if (card) calcMaterialUtilizada(card);
     });
+    updateMaterialTotals();
+  }
+
+  function calcMaterialUtilizada(card) {
+    const entEl = card.querySelector(".mat-ent");
+    const devEl = card.querySelector(".mat-dev");
+    const utiEl = card.querySelector(".mat-uti");
+    if (!entEl || !devEl || !utiEl) return;
+    const ent = Number(entEl.value);
+    const dev = Number(devEl.value);
+    if (!Number.isFinite(ent) || !Number.isFinite(dev) || isBlank(devEl.value)) {
+      utiEl.value = "";
+      return;
+    }
+    const used = Math.max(0, ent - dev);
+    utiEl.value = String(used);
+  }
+
+  function setMaterialEntregadaEditable(unlocked) {
+    materialEntregadaUnlocked = unlocked;
+    document.querySelectorAll(".mat-ent").forEach((el) => {
+      el.readOnly = !unlocked;
+      el.setAttribute("aria-readonly", unlocked ? "false" : "true");
+    });
+    document.querySelectorAll("[data-unlock-ent]").forEach((btn) => {
+      btn.textContent = unlocked ? "Desbloqueado" : "Cambiar";
+      btn.classList.toggle("is-unlocked", unlocked);
+      btn.disabled = unlocked;
+    });
+  }
+
+  function unlockMaterialEntregada(btn) {
+    if (materialEntregadaUnlocked) {
+      showToast("Cantidad entregada ya desbloqueada");
+      return;
+    }
+    const typed = window.prompt("Contraseña para cambiar la cantidad entregada:");
+    if (typed == null) return;
+    if (String(typed).trim() !== MATERIAL_ENT_PASSWORD) {
+      showToast("Contraseña incorrecta");
+      return;
+    }
+    setMaterialEntregadaEditable(true);
+    showToast("Cantidad entregada desbloqueada");
+    const card = btn.closest(".material-card");
+    const input = card?.querySelector(".mat-ent");
+    input?.focus();
+    input?.select?.();
   }
 
   function updateMaterialTotals() {
@@ -552,6 +645,8 @@
     for (let i = 0; i < answers.materiales.length; i++) {
       const row = answers.materiales[i];
       const card = document.querySelector(`#materialList .material-card[data-idx="${i}"]`);
+      if (card) calcMaterialUtilizada(card);
+      row.cantidadUtilizada = card?.querySelector('[data-k="cantidadUtilizada"]')?.value ?? row.cantidadUtilizada;
       if (isBlank(row.fechaEntrega)) {
         markInvalid(card?.querySelector('[data-k="fechaEntrega"]'));
         return `En material promocional, captura la fecha de entrega de “${row.material}”.`;
@@ -560,13 +655,19 @@
         markInvalid(card?.querySelector('[data-k="cantidadEntregada"]'));
         return `En material promocional, captura la cantidad entregada de “${row.material}” (puedes poner 0).`;
       }
-      if (isBlank(row.cantidadUtilizada)) {
-        markInvalid(card?.querySelector('[data-k="cantidadUtilizada"]'));
-        return `En material promocional, captura la cantidad utilizada de “${row.material}” (puedes poner 0).`;
-      }
       if (isBlank(row.cantidadDevuelta)) {
         markInvalid(card?.querySelector('[data-k="cantidadDevuelta"]'));
         return `En material promocional, captura la cantidad devuelta de “${row.material}” (puedes poner 0).`;
+      }
+      const ent = Number(row.cantidadEntregada);
+      const dev = Number(row.cantidadDevuelta);
+      if (Number.isFinite(ent) && Number.isFinite(dev) && dev > ent) {
+        markInvalid(card?.querySelector('[data-k="cantidadDevuelta"]'));
+        return `En “${row.material}”, la cantidad devuelta no puede ser mayor que la entregada.`;
+      }
+      if (isBlank(row.cantidadUtilizada)) {
+        markInvalid(card?.querySelector('[data-k="cantidadUtilizada"]'));
+        return `En material promocional, no se pudo calcular la cantidad utilizada de “${row.material}”.`;
       }
       if (isBlank(row.mermaDanio)) {
         markInvalid(card?.querySelector(".yesno"));
@@ -748,6 +849,10 @@
     e.preventDefault();
     hint.textContent = "";
     calcIndicadores();
+    document.querySelectorAll("#materialList .material-card").forEach((card) => {
+      calcMaterialUtilizada(card);
+    });
+    updateMaterialTotals();
     const answers = collectAnswers();
     const err = validate(answers);
     if (err) {
@@ -824,6 +929,16 @@
     resetEvidence();
     resetMaterialMerma();
     setIncidenciaDetalleOpen(false);
+    document.querySelectorAll(".mat-ent").forEach((el) => {
+      el.value = String(MATERIAL_ENT_DEFAULT);
+    });
+    document.querySelectorAll(".mat-dev").forEach((el) => {
+      el.value = "";
+    });
+    document.querySelectorAll("#materialList .material-card").forEach((card) => {
+      calcMaterialUtilizada(card);
+    });
+    setMaterialEntregadaEditable(false);
     updateMaterialTotals();
     calcIndicadores();
     successPanel.hidden = true;

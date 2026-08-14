@@ -1,6 +1,9 @@
 window.YAAVS_REPORT_CONFIG = {
   submitUrl: "/api/submit",
   title: "Reporte de Resultados – Activación BTL YAAVS",
+  /** Contraseña para editar “Cantidad entregada” (default 20). */
+  materialEntregadaPassword: "Noemi2026",
+  materialEntregadaDefault: 20,
 };
 
 window.YAAVS_REPORT_OPTIONS = {
