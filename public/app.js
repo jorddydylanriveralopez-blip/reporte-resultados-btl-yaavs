@@ -177,7 +177,9 @@
               <span class="evidence-pick-btn">Subir fotos o videos</span>
               <span class="evidence-pick-hint">Fotos o videos · las fotos se comprimen al enviar · máx. ${MAX_FILES_PER_POINT} · ${MAX_FILE_MB} MB c/u</span>
             </label>
-            <div class="evidence-previews" id="mat_ev_prev_${i}"></div>
+            <div class="evidence-previews" id="mat_ev_prev_${i}">
+              <p class="evidence-preview-empty">Aquí verás la previsualización de lo que subas.</p>
+            </div>
           </div>
         </fieldset>
       </article>`;
@@ -354,9 +356,11 @@
             hidden
           />
           <span class="evidence-pick-btn">Subir evidencia</span>
-          <span class="evidence-pick-hint">Cualquier archivo · máx. ${MAX_FILES_PER_POINT} · ${MAX_FILE_MB} MB c/u</span>
+          <span class="evidence-pick-hint">Cualquier archivo · máx. ${MAX_FILES_PER_POINT} · ${MAX_FILE_MB} MB c/u · verás previsualización abajo</span>
         </label>
-        <div class="evidence-previews" id="ev_prev_${i}"></div>
+        <div class="evidence-previews" id="ev_prev_${i}">
+          <p class="evidence-preview-empty">Aquí verás la previsualización de lo que subas.</p>
+        </div>
       </div>`;
       })
       .join("");
@@ -418,32 +422,92 @@
     renderMaterialMermaPreviews(idx);
   }
 
+  function formatFileSize(bytes) {
+    const n = Number(bytes) || 0;
+    if (n < 1024) return `${n} B`;
+    if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`;
+    return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  function isImageFile(file) {
+    return (
+      file.type.startsWith("image/") ||
+      /\.(jpe?g|png|gif|webp|bmp)$/i.test(file.name || "")
+    );
+  }
+
+  function isVideoFile(file) {
+    return (
+      file.type.startsWith("video/") ||
+      /\.(mp4|mov|m4v|webm|avi|mkv)$/i.test(file.name || "")
+    );
+  }
+
+  function revokePreviewUrls(prevEl) {
+    if (!prevEl) return;
+    prevEl.querySelectorAll("img[src^='blob:'], video[src^='blob:']").forEach((el) => {
+      try {
+        URL.revokeObjectURL(el.src);
+      } catch (_) {}
+    });
+  }
+
   function renderFilePreviews(files, countEl, prevEl, onRemove) {
     if (countEl) {
       countEl.textContent =
         files.length === 1 ? "1 archivo" : `${files.length} archivos`;
+      countEl.classList.toggle("has-files", files.length > 0);
     }
     if (!prevEl) return;
 
-    prevEl.innerHTML = files
-      .map((file, fi) => {
-        const url = URL.createObjectURL(file);
-        const isVideo = file.type.startsWith("video/");
-        const isImage = file.type.startsWith("image/");
-        let media = `<div class="evidence-file-icon" aria-hidden="true">${escapeHtml(fileExt(file.name))}</div>`;
-        if (isVideo) media = `<video src="${url}" muted playsinline></video>`;
-        else if (isImage) media = `<img src="${url}" alt="${escapeAttr(file.name)}" />`;
-        return `
-        <div class="evidence-thumb" data-fi="${fi}">
-          ${media}
-          <button type="button" class="evidence-remove" aria-label="Quitar ${escapeAttr(file.name)}">×</button>
-          <span class="evidence-name">${escapeHtml(file.name)}</span>
-        </div>`;
-      })
-      .join("");
+    revokePreviewUrls(prevEl);
+
+    if (!files.length) {
+      prevEl.innerHTML = `<p class="evidence-preview-empty">Aquí verás la previsualización de lo que subas.</p>`;
+      prevEl.classList.remove("has-files");
+      return;
+    }
+
+    prevEl.classList.add("has-files");
+    prevEl.innerHTML = `
+      <p class="evidence-preview-label">Previsualización · toca × para quitar</p>
+      <div class="evidence-preview-grid">
+        ${files
+          .map((file, fi) => {
+            const url = URL.createObjectURL(file);
+            const isVideo = isVideoFile(file);
+            const isImage = isImageFile(file);
+            let media = `<div class="evidence-file-icon" aria-hidden="true">${escapeHtml(
+              fileExt(file.name),
+            )}</div>`;
+            if (isVideo) {
+              media = `<video src="${url}" muted playsinline preload="metadata"></video>`;
+            } else if (isImage) {
+              media = `<img src="${url}" alt="${escapeAttr(file.name)}" />`;
+            }
+            return `
+            <div class="evidence-thumb" data-fi="${fi}">
+              <div class="evidence-thumb-media">
+                ${media}
+                <button type="button" class="evidence-remove" aria-label="Quitar ${escapeAttr(
+                  file.name,
+                )}">×</button>
+              </div>
+              <div class="evidence-thumb-meta">
+                <span class="evidence-name" title="${escapeAttr(file.name)}">${escapeHtml(
+                  file.name,
+                )}</span>
+                <span class="evidence-size">${escapeHtml(formatFileSize(file.size))}</span>
+              </div>
+            </div>`;
+          })
+          .join("")}
+      </div>`;
 
     prevEl.querySelectorAll(".evidence-remove").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         const thumb = btn.closest(".evidence-thumb");
         const fi = Number(thumb?.dataset.fi);
         if (Number.isNaN(fi)) return;
