@@ -1174,8 +1174,16 @@ a {
   gap: 0.85rem;
 }
 
+.modal-evidence-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .modal-evidence h3 {
-  margin: 0 0 0.45rem;
+  margin: 0;
   font-family: "Space Grotesk", Outfit, sans-serif;
   font-size: 0.95rem;
   color: var(--navy);
@@ -1190,16 +1198,24 @@ a {
 
 .evidence-gallery {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-  gap: 0.45rem;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.65rem;
 }
 
 .evidence-item {
   display: grid;
-  gap: 0.25rem;
-  text-decoration: none;
+  gap: 0.35rem;
   color: var(--ink);
   font-size: 0.68rem;
+  padding: 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.evidence-preview {
+  display: block;
+  text-decoration: none;
 }
 
 .evidence-item img,
@@ -1226,11 +1242,48 @@ a {
   letter-spacing: 0.04em;
 }
 
-.evidence-item span {
+.evidence-name {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--muted);
+  font-weight: 600;
+}
+
+.evidence-actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.evidence-btn {
+  flex: 1 1 auto;
+  text-align: center;
+  font-size: 0.72rem !important;
+  padding: 0.35rem 0.45rem !important;
+  min-height: 0 !important;
+  text-decoration: none;
+}
+
+.merma-files {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+}
+
+.merma-file-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+}
+
+.merma-file-row a:first-child {
+  color: var(--cyan);
+  font-weight: 600;
+  word-break: break-all;
 }
 
 .empty-evidence {

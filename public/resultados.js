@@ -396,10 +396,24 @@
                 : ""
             }</span>`
           : `<span class="badge-ok">No</span>`;
+        const mermaFiles =
+          Array.isArray(m.evidenciasMerma) && m.evidenciasMerma.length
+            ? `<div class="merma-files">${m.evidenciasMerma
+                .map((f) => {
+                  const view = escapeAttr(fileViewUrl(f));
+                  const dl = escapeAttr(fileDownloadUrl(f));
+                  const name = escapeHtml(f.name || "archivo");
+                  return `<div class="merma-file-row">
+                    <a href="${view}" target="_blank" rel="noopener">${name}</a>
+                    <a class="btn btn-soft evidence-btn" href="${dl}" download="${name}">Descargar</a>
+                  </div>`;
+                })
+                .join("")}</div>`
+            : "";
         return `<tr>
           <td>${escapeHtml(name)}<div class="meta" style="font-size:0.75rem;color:var(--muted)">Entrega: ${escapeHtml(
             m.fechaEntrega || "—",
-          )}</div></td>
+          )}</div>${mermaFiles}</td>
           <td class="num">${ent}</td>
           <td class="num">${uti}</td>
           <td class="num">${dev}</td>
@@ -701,6 +715,13 @@
         </button>
         <div class="item-actions">
           <button type="button" class="btn btn-soft" data-open="${escapeHtml(r.id)}">Ver</button>
+          ${
+            ev
+              ? `<button type="button" class="btn btn-soft" data-open="${escapeHtml(
+                  r.id,
+                )}">Archivos (${ev})</button>`
+              : ""
+          }
           <button type="button" class="btn btn-soft" data-csv="${escapeHtml(r.id)}">CSV</button>
         </div>
       </li>
@@ -770,30 +791,71 @@
     return items.find((r) => r.id === id);
   }
 
+  function fileViewUrl(f) {
+    return String(f?.url || "");
+  }
+
+  function fileDownloadUrl(f) {
+    const view = fileViewUrl(f);
+    if (!view) return "";
+    const params = new URLSearchParams({
+      f: view,
+      name: String(f?.name || pathBasename(view) || "archivo"),
+    });
+    return `/api/download?${params.toString()}`;
+  }
+
+  function pathBasename(p) {
+    const s = String(p || "");
+    const i = s.lastIndexOf("/");
+    return i >= 0 ? s.slice(i + 1) : s;
+  }
+
+  function collectEvidenceFiles(entryId) {
+    const full = rawItems.find((x) => x.id === entryId);
+    const blocks = Array.isArray(full?.answers?.evidencia) ? full.answers.evidencia : [];
+    const materiales = Array.isArray(full?.answers?.materiales) ? full.answers.materiales : [];
+    const out = [];
+    blocks.forEach((block) => {
+      (block?.files || []).forEach((f) => {
+        out.push({ ...f, grupo: block.punto || "Evidencia" });
+      });
+    });
+    materiales.forEach((row) => {
+      (row?.evidenciasMerma || []).forEach((f) => {
+        out.push({ ...f, grupo: `Merma/daño · ${row.material || "Material"}` });
+      });
+    });
+    return out;
+  }
+
   function fileTileHtml(f) {
-    const url = escapeAttr(f.url || "");
+    const view = escapeAttr(fileViewUrl(f));
+    const dl = escapeAttr(fileDownloadUrl(f));
     const name = escapeHtml(f.name || "archivo");
     const mime = String(f.mime || "");
-    if (mime.startsWith("video/")) {
-      return `<a class="evidence-item video" href="${url}" target="_blank" rel="noopener">
-        <video src="${url}" muted playsinline></video>
-        <span>${name}</span>
-      </a>`;
+    let preview = `<div class="evidence-file-tile">${escapeHtml(
+      String(f.name || "")
+        .split(".")
+        .pop()
+        ?.toUpperCase() || "FILE",
+    )}</div>`;
+    if (mime.startsWith("video/") || /\.(mp4|mov|webm|m4v)$/i.test(f.name || "")) {
+      preview = `<video src="${view}" muted playsinline preload="metadata"></video>`;
+    } else if (mime.startsWith("image/") || /\.(jpe?g|png|gif|webp|heic)$/i.test(f.name || "")) {
+      preview = `<img src="${view}" alt="${name}" loading="lazy" />`;
     }
-    if (mime.startsWith("image/")) {
-      return `<a class="evidence-item" href="${url}" target="_blank" rel="noopener">
-        <img src="${url}" alt="${name}" loading="lazy" />
-        <span>${name}</span>
-      </a>`;
-    }
-    const ext = String(f.name || "")
-      .split(".")
-      .pop()
-      ?.toUpperCase() || "FILE";
-    return `<a class="evidence-item file" href="${url}" target="_blank" rel="noopener" download>
-      <div class="evidence-file-tile">${escapeHtml(ext)}</div>
-      <span>${name}</span>
-    </a>`;
+    return `
+      <article class="evidence-item">
+        <a class="evidence-preview" href="${view}" target="_blank" rel="noopener" title="Ver ${name}">
+          ${preview}
+        </a>
+        <span class="evidence-name" title="${name}">${name}</span>
+        <div class="evidence-actions">
+          <a class="btn btn-soft evidence-btn" href="${view}" target="_blank" rel="noopener">Ver</a>
+          <a class="btn btn-soft evidence-btn" href="${dl}" download="${name}">Descargar</a>
+        </div>
+      </article>`;
   }
 
   function evidenceHtml(entryId) {
@@ -806,7 +868,10 @@
         punto: `Merma/daño · ${row.material || "Material"}`,
         files: row.evidenciasMerma,
       }));
-    const allBlocks = [...blocks, ...mermaBlocks];
+    const allBlocks = [...blocks, ...mermaBlocks].filter(
+      (b) => Array.isArray(b.files) && b.files.length,
+    );
+    const allFiles = collectEvidenceFiles(entryId);
 
     if (!allBlocks.length) {
       return `<p class="empty-evidence">Sin evidencias en este reporte.</p>`;
@@ -814,13 +879,18 @@
 
     return `
       <div class="modal-evidence">
-        <h3>Evidencias</h3>
+        <div class="modal-evidence-head">
+          <h3>Evidencias (${allFiles.length})</h3>
+          <button type="button" class="btn btn-soft" data-download-all="${escapeAttr(entryId)}">
+            Descargar todas
+          </button>
+        </div>
         ${allBlocks
           .map((block) => {
             const files = Array.isArray(block.files) ? block.files : [];
             return `
             <div class="evidence-block">
-              <h4>${escapeHtml(block.punto || "Evidencia")}</h4>
+              <h4>${escapeHtml(block.punto || "Evidencia")} · ${files.length}</h4>
               <div class="evidence-gallery">${files.map(fileTileHtml).join("")}</div>
             </div>`;
           })
@@ -828,14 +898,33 @@
       </div>`;
   }
 
+  function downloadAllEvidence(entryId) {
+    const files = collectEvidenceFiles(entryId);
+    if (!files.length) return;
+    files.forEach((f, i) => {
+      window.setTimeout(() => {
+        const a = document.createElement("a");
+        a.href = fileDownloadUrl(f);
+        a.download = f.name || `archivo_${i + 1}`;
+        a.rel = "noopener";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }, i * 350);
+    });
+  }
+
   function openModal(id) {
     const r = findById(id);
     if (!r) return;
     const lvl = incidenciaLevel(r.hayIncidencia);
+    const evCount = countEvidence(r.id);
     modalHero.innerHTML = `
       <span class="badge ${lvl.cls}">${lvl.label}</span>
       <h2>${escapeHtml(r.claveYaavser || "Sin clave")}</h2>
-      <p>${formatDate(r.receivedAt || r.timestamp)} · ${escapeHtml(r.puntoDeVenta || "")}</p>
+      <p>${formatDate(r.receivedAt || r.timestamp)} · ${escapeHtml(r.puntoDeVenta || "")}${
+        evCount ? ` · ${evCount} archivo${evCount === 1 ? "" : "s"}` : ""
+      }</p>
     `;
     modalBody.innerHTML =
       Object.keys(LABELS)
@@ -850,6 +939,13 @@
       evidenceHtml(r.id);
     modalActions.innerHTML = `
       <button type="button" class="btn btn-soft" data-csv="${escapeHtml(r.id)}">CSV de este reporte</button>
+      ${
+        evCount
+          ? `<button type="button" class="btn btn-soft" data-download-all="${escapeHtml(
+              r.id,
+            )}">Descargar evidencias</button>`
+          : ""
+      }
       <a class="btn btn-soft" href="./api/export.xlsx" data-excel>Excel completo</a>
     `;
     if (typeof modal.showModal === "function") modal.showModal();
@@ -933,7 +1029,22 @@
 
   modalActions.addEventListener("click", (e) => {
     const csvBtn = e.target.closest("[data-csv]");
-    if (csvBtn) downloadCsvOne(csvBtn.getAttribute("data-csv"));
+    if (csvBtn) {
+      downloadCsvOne(csvBtn.getAttribute("data-csv"));
+      return;
+    }
+    const allBtn = e.target.closest("[data-download-all]");
+    if (allBtn) {
+      e.preventDefault();
+      downloadAllEvidence(allBtn.getAttribute("data-download-all"));
+    }
+  });
+
+  modalBody.addEventListener("click", (e) => {
+    const allBtn = e.target.closest("[data-download-all]");
+    if (!allBtn) return;
+    e.preventDefault();
+    downloadAllEvidence(allBtn.getAttribute("data-download-all"));
   });
 
   document.getElementById("modalClose").addEventListener("click", () => {

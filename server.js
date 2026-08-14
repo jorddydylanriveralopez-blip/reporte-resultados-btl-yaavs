@@ -570,6 +570,37 @@ app.get("/resultados", (_req, res) => {
   res.sendFile(path.join(publicDir, "resultados.html"));
 });
 
+/** Descarga forzada de un archivo subido (evita que el navegador solo lo abra). */
+app.get("/api/download", (req, res) => {
+  try {
+    const rel = String(req.query.f || "").trim();
+    if (!rel.startsWith("/uploads/")) {
+      return res.status(400).json({ ok: false, error: "Ruta inválida" });
+    }
+    const relative = rel.slice("/uploads/".length);
+    if (!relative || relative.includes("..") || path.isAbsolute(relative)) {
+      return res.status(400).json({ ok: false, error: "Ruta inválida" });
+    }
+    const abs = path.resolve(uploadsRoot, relative);
+    if (!abs.startsWith(path.resolve(uploadsRoot) + path.sep) && abs !== path.resolve(uploadsRoot)) {
+      return res.status(400).json({ ok: false, error: "Ruta inválida" });
+    }
+    if (!fs.existsSync(abs) || !fs.statSync(abs).isFile()) {
+      return res.status(404).json({ ok: false, error: "Archivo no encontrado" });
+    }
+    const downloadName =
+      String(req.query.name || "").trim() || path.basename(abs);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.download(abs, downloadName, (err) => {
+      if (err && !res.headersSent) {
+        res.status(500).json({ ok: false, error: "No se pudo descargar" });
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message || "No se pudo descargar" });
+  }
+});
+
 app.use(
   "/uploads",
   express.static(uploadsRoot, {
