@@ -408,8 +408,13 @@ app.post("/api/submit", (req, res) => {
       const list = readResponses();
       list.unshift(entry);
       writeResponses(list);
-      const sheets = await forwardToSheets(entry);
-      res.status(201).json({ ok: true, id: entry.id, sheets });
+      // Responder ya; Sheets en segundo plano para no alargar la espera del usuario
+      res.status(201).json({ ok: true, id: entry.id, sheets: { queued: Boolean(SHEETS_WEBHOOK_URL) } });
+      if (SHEETS_WEBHOOK_URL) {
+        forwardToSheets(entry).catch((err) =>
+          console.error("Sheets webhook error:", err?.message || err),
+        );
+      }
     } catch (e) {
       console.error(e);
       res.status(500).json({ ok: false, error: "No se pudo guardar el reporte." });

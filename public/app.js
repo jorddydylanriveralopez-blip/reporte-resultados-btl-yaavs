@@ -14,6 +14,8 @@
 
   const MAX_FILES_PER_POINT = 10;
   const MAX_FILE_MB = 100;
+  const IMAGE_MAX_EDGE = 1600;
+  const IMAGE_JPEG_QUALITY = 0.72;
 
   /** @type {Record<number, File[]>} */
   const selectedFiles = {};
@@ -146,7 +148,7 @@
                 hidden
               />
               <span class="evidence-pick-btn">Subir fotos o videos</span>
-              <span class="evidence-pick-hint">Fotos o videos · máx. ${MAX_FILES_PER_POINT} · ${MAX_FILE_MB} MB c/u</span>
+              <span class="evidence-pick-hint">Fotos o videos · las fotos se comprimen al enviar · máx. ${MAX_FILES_PER_POINT} · ${MAX_FILE_MB} MB c/u</span>
             </label>
             <div class="evidence-previews" id="mat_ev_prev_${i}"></div>
           </div>
@@ -664,6 +666,100 @@
     if (name === "horarioInicio" || name === "horarioFin") calcIndicadores();
   });
 
+  function isCompressibleImage(file) {
+    if (!file || file.type.startsWith("video/")) return false;
+    if (file.type === "image/jpeg" || file.type === "image/png" || file.type === "image/webp") {
+      return true;
+    }
+    return /\.(jpe?g|png|webp)$/i.test(file.name || "");
+  }
+
+  function loadImageElement(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        resolve(img);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error("No se pudo leer la imagen"));
+      };
+      img.src = url;
+    });
+  }
+
+  async function compressImageFile(file) {
+    if (!isCompressibleImage(file)) return file;
+    // Ya es chica: no gastar tiempo recomprimiendo
+    if (file.size <= 350 * 1024) return file;
+    try {
+      const img = await loadImageElement(file);
+      const scale = Math.min(1, IMAGE_MAX_EDGE / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * scale));
+      const h = Math.max(1, Math.round(img.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d", { alpha: false });
+      if (!ctx) return file;
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      const blob = await new Promise((resolve) =>
+        canvas.toBlob(resolve, "image/jpeg", IMAGE_JPEG_QUALITY),
+      );
+      if (!blob || blob.size >= file.size * 0.95) return file;
+      const base = String(file.name || "foto").replace(/\.[^.]+$/, "") || "foto";
+      return new File([blob], `${base}.jpg`, {
+        type: "image/jpeg",
+        lastModified: Date.now(),
+      });
+    } catch (_) {
+      return file;
+    }
+  }
+
+  async function prepareUploadFile(file, onStep) {
+    if (onStep) onStep();
+    return compressImageFile(file);
+  }
+
+  function postFormDataWithProgress(url, formData, onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", url);
+      xhr.responseType = "json";
+      xhr.upload.onprogress = (ev) => {
+        if (!ev.lengthComputable || !onProgress) return;
+        onProgress(Math.min(99, Math.round((ev.loaded / ev.total) * 100)));
+      };
+      xhr.onload = () => {
+        const data =
+          xhr.response && typeof xhr.response === "object"
+            ? xhr.response
+            : (() => {
+                try {
+                  return JSON.parse(xhr.responseText || "{}");
+                } catch (_) {
+                  return {};
+                }
+              })();
+        if (xhr.status >= 200 && xhr.status < 300 && data.ok) {
+          if (onProgress) onProgress(100);
+          resolve(data);
+          return;
+        }
+        reject(new Error(data.error || `No se pudo enviar (${xhr.status || "red"})`));
+      };
+      xhr.onerror = () => reject(new Error("Error de red al subir. Revisa tu conexión e intenta de nuevo."));
+      xhr.ontimeout = () => reject(new Error("La subida tardó demasiado. Intenta con fotos más ligeras o menos videos."));
+      xhr.timeout = 10 * 60 * 1000;
+      xhr.send(formData);
+    });
+  }
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     hint.textContent = "";
@@ -677,39 +773,56 @@
       return;
     }
 
-    const payload = new FormData();
-    const toSend = { ...answers };
-    if (toSend.hayIncidencia !== "Sí") {
-      toSend.incidencias = [];
-    }
-    payload.append("answers", JSON.stringify(toSend));
-    payload.append("website", form.website?.value || "");
-
+    const evEntries = [];
     evidencia.forEach((_, i) => {
-      (selectedFiles[i] || []).forEach((file) => {
-        payload.append(`ev_${i}`, file, file.name);
-      });
+      (selectedFiles[i] || []).forEach((file) => evEntries.push({ field: `ev_${i}`, file }));
     });
-
+    const matEntries = [];
     materiales.forEach((_, i) => {
-      (materialMermaFiles[i] || []).forEach((file) => {
-        payload.append(`mat_ev_${i}`, file, file.name);
-      });
+      (materialMermaFiles[i] || []).forEach((file) =>
+        matEntries.push({ field: `mat_ev_${i}`, file }),
+      );
     });
+    const allEntries = [...evEntries, ...matEntries];
+    const totalSteps = Math.max(1, allEntries.length);
 
     submitBtn.disabled = true;
-    submitBtn.textContent = "Enviando…";
+    submitBtn.textContent = "Preparando fotos…";
+    hint.textContent = "Comprimiendo fotos para enviar más rápido…";
+
     try {
-      const res = await fetch(cfg.submitUrl || "/api/submit", {
-        method: "POST",
-        body: payload,
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.ok) {
-        throw new Error(data.error || "No se pudo enviar");
+      let done = 0;
+      const prepared = [];
+      for (const entry of allEntries) {
+        const file = await prepareUploadFile(entry.file, () => {
+          done += 1;
+          const pct = Math.round((done / totalSteps) * 100);
+          submitBtn.textContent = `Preparando… ${pct}%`;
+        });
+        prepared.push({ field: entry.field, file });
       }
+
+      const payload = new FormData();
+      const toSend = { ...answers };
+      if (toSend.hayIncidencia !== "Sí") {
+        toSend.incidencias = [];
+      }
+      payload.append("answers", JSON.stringify(toSend));
+      payload.append("website", form.website?.value || "");
+      prepared.forEach(({ field, file }) => {
+        payload.append(field, file, file.name);
+      });
+
+      hint.textContent = "Subiendo reporte…";
+      submitBtn.textContent = "Subiendo… 0%";
+      await postFormDataWithProgress(cfg.submitUrl || "/api/submit", payload, (pct) => {
+        submitBtn.textContent = `Subiendo… ${pct}%`;
+        hint.textContent = pct >= 100 ? "Guardando…" : `Subiendo archivos… ${pct}%`;
+      });
+
       form.hidden = true;
       successPanel.hidden = false;
+      hint.textContent = "";
       showToast("Reporte guardado");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err2) {
