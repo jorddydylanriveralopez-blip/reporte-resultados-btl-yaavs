@@ -1,0 +1,301 @@
+name: Deploy encuesta satisfaccion
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout encuesta
+        uses: actions/checkout@v4
+        with:
+          repository: jorddydylanriveralopez-blip/encuesta-satisfaccion-activacion-yaavs
+
+      - name: Pack source archive
+        run: |
+          STAMP=$(date -u +%Y%m%d_%H%M%S)
+          ARCHIVE="encuesta-satisfaccion-activacion-yaavs_${STAMP}.zip"
+          zip -r "$ARCHIVE" . \
+            -x "node_modules/*" \
+            -x ".git/*" \
+            -x "data/responses.json" \
+            -x ".env" \
+            -x ".env.*" \
+            -x ".DS_Store" \
+            -x "*.zip" \
+            -x ".github/*"
+          echo "ARCHIVE=$ARCHIVE" >> "$GITHUB_ENV"
+          ls -lh "$ARCHIVE"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install upload deps
+        run: npm install --no-save axios form-data tus-js-client
+
+      - name: Backup live responses
+        run: |
+          DOMAIN="lawngreen-guanaco-656732.hostingersite.com"
+          curl -fsS --connect-timeout 10 --max-time 25 "https://${DOMAIN}/api/responses" -o responses-live.json \
+            || echo '{"responses":[]}' > responses-live.json
+          python3 -c "import json; d=json.load(open('responses-live.json')); print('backed up', len(d.get('responses') or d.get('items') or []))"
+
+      - name: Upload archive and trigger Node build
+        env:
+          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+          HOSTINGER_USERNAME: ${{ secrets.HOSTINGER_USERNAME }}
+          HOSTINGER_DOMAIN: lawngreen-guanaco-656732.hostingersite.com
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const axios = require('axios');
+          const FormData = require('form-data');
+          const tus = require('tus-js-client');
+
+          const TOKEN = process.env.HOSTINGER_API_TOKEN;
+          const USERNAME = process.env.HOSTINGER_USERNAME || 'u376360150';
+          const DOMAIN = process.env.HOSTINGER_DOMAIN || 'lawngreen-guanaco-656732.hostingersite.com';
+          const ARCHIVE = process.env.ARCHIVE;
+          const BASE = 'https://developers.hostinger.com';
+          const headers = {
+            Authorization: `Bearer ${TOKEN}`,
+            Accept: 'application/json',
+            'User-Agent': 'github-actions-hostinger-deploy/1.1',
+          };
+
+          function sleep(ms) {
+            return new Promise((r) => setTimeout(r, ms));
+          }
+
+          async function withRetry(fn, label, attempts = 5) {
+            let last;
+            for (let i = 0; i < attempts; i++) {
+              try {
+                return await fn();
+              } catch (e) {
+                last = e;
+                const detail = e.response?.data || e.message;
+                console.error(`${label} attempt ${i + 1} failed:`, e.response?.status || '', detail);
+                await sleep(2000 * (i + 1));
+              }
+            }
+            throw last;
+          }
+
+          async function deployFromArchive() {
+            const form = new FormData();
+            form.append('archive', fs.createReadStream(ARCHIVE), {
+              filename: path.basename(ARCHIVE),
+              contentType: 'application/zip',
+            });
+            form.append('app_type', 'express');
+            form.append('entry_file', 'server.js');
+            form.append('node_version', '22');
+            form.append('package_manager', 'npm');
+            form.append('build_script', 'build');
+
+            const url = `${BASE}/api/hosting/v1/accounts/${USERNAME}/websites/${DOMAIN}/nodejs/builds/from-archive`;
+            const res = await axios.post(url, form, {
+              headers: { ...headers, ...form.getHeaders() },
+              timeout: 300000,
+              maxContentLength: Infinity,
+              maxBodyLength: Infinity,
+              validateStatus: () => true,
+            });
+            console.log('from-archive status', res.status);
+            if (res.status >= 200 && res.status < 300) return res.data;
+            throw Object.assign(new Error('from-archive failed'), { response: res });
+          }
+
+          async function uploadViaTus() {
+            const credsRes = await axios.post(
+              `${BASE}/api/hosting/v1/files/upload-urls`,
+              { username: USERNAME, domain: DOMAIN },
+              {
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                validateStatus: () => true,
+              }
+            );
+            console.log('upload-urls status', credsRes.status);
+            if (credsRes.status !== 200) {
+              throw Object.assign(new Error('upload-urls failed'), { response: credsRes });
+            }
+            const creds = credsRes.data;
+            const relativePath = path.basename(ARCHIVE);
+            const stats = fs.statSync(ARCHIVE);
+            const uploadUrlWithFile = `${creds.url.replace(/\/$/, '')}/${relativePath}?override=true`;
+            const requestHeaders = {
+              'X-Auth': creds.auth_key,
+              'X-Auth-Rest': creds.rest_auth_key,
+              'upload-length': String(stats.size),
+              'upload-offset': '0',
+            };
+            await axios.post(uploadUrlWithFile, '', {
+              headers: requestHeaders,
+              timeout: 60000,
+              validateStatus: (s) => s === 201,
+            });
+            await new Promise((resolve, reject) => {
+              const upload = new tus.Upload(fs.createReadStream(ARCHIVE), {
+                uploadUrl: uploadUrlWithFile,
+                retryDelays: [1000, 2000, 4000, 8000],
+                uploadDataDuringCreation: false,
+                parallelUploads: 1,
+                chunkSize: 10485760,
+                headers: requestHeaders,
+                removeFingerprintOnSuccess: true,
+                uploadSize: stats.size,
+                metadata: { filename: relativePath },
+                onError: reject,
+                onProgress: (sent, total) => console.log(`progress ${sent}/${total}`),
+                onSuccess: () => resolve(),
+              });
+              upload.start();
+            });
+
+            let settings = {
+              node_version: 22,
+              app_type: 'express',
+              entry_file: 'server.js',
+              package_manager: 'npm',
+              build_script: 'build',
+            };
+            try {
+              const settingsUrl = `${BASE}/api/hosting/v1/accounts/${USERNAME}/websites/${DOMAIN}/nodejs/builds/settings/from-archive?archive_path=${encodeURIComponent(relativePath)}`;
+              settings = (await axios.get(settingsUrl, { headers })).data;
+              console.log('settings', JSON.stringify(settings));
+            } catch (e) {
+              console.log('settings fallback', e.response?.status || e.message);
+            }
+
+            const buildRes = await axios.post(
+              `${BASE}/api/hosting/v1/accounts/${USERNAME}/websites/${DOMAIN}/nodejs/builds`,
+              {
+                ...settings,
+                node_version: 22,
+                app_type: 'express',
+                entry_file: 'server.js',
+                package_manager: 'npm',
+                source_type: 'archive',
+                source_options: { archive_path: relativePath },
+              },
+              {
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                validateStatus: () => true,
+              }
+            );
+            console.log('build status', buildRes.status, JSON.stringify(buildRes.data).slice(0, 500));
+            if (buildRes.status !== 200) {
+              throw Object.assign(new Error('build trigger failed'), { response: buildRes });
+            }
+            return buildRes.data;
+          }
+
+          async function poll(uuid) {
+            for (let i = 0; i < 60; i++) {
+              await sleep(5000);
+              const list = (
+                await axios.get(
+                  `${BASE}/api/hosting/v1/accounts/${USERNAME}/websites/${DOMAIN}/nodejs/builds?per_page=5`,
+                  { headers }
+                )
+              ).data;
+              const latest = list.data?.[0];
+              const state = String(latest?.state || '').toLowerCase();
+              uuid = latest?.uuid || uuid;
+              console.log(`poll ${i + 1}`, state, uuid);
+              if (['completed', 'success', 'succeeded'].includes(state)) {
+                console.log('SUCCESS');
+                console.log(`LIVE_URL=https://${DOMAIN}/`);
+                console.log(`RESULTADOS=https://${DOMAIN}/resultados`);
+                return;
+              }
+              if (['failed', 'error'].includes(state)) {
+                throw new Error(`Build failed state=${state}`);
+              }
+            }
+            throw new Error('Build timed out');
+          }
+
+          (async () => {
+            if (!TOKEN) throw new Error('HOSTINGER_API_TOKEN missing');
+            if (!ARCHIVE || !fs.existsSync(ARCHIVE)) throw new Error('ARCHIVE missing');
+            console.log('domain length', DOMAIN.length, 'user length', USERNAME.length, 'archive', ARCHIVE, 'token length', TOKEN.length);
+
+            let build;
+            try {
+              build = await withRetry(deployFromArchive, 'from-archive', 3);
+              console.log('from-archive ok', JSON.stringify(build).slice(0, 800));
+            } catch (e) {
+              console.error('from-archive path failed, trying TUS');
+              build = await withRetry(uploadViaTus, 'tus', 4);
+            }
+
+            await poll(build?.uuid || build?.data?.uuid);
+          })().catch((e) => {
+            console.error('DEPLOY_FAILED', e.response?.status, e.response?.data || e.message);
+            process.exit(1);
+          });
+          NODE
+
+      - name: Restore live responses
+        if: always()
+        env:
+          RESET_KEY: ${{ secrets.RESET_KEY }}
+        run: |
+          if [ ! -f responses-live.json ]; then echo "no backup file"; exit 0; fi
+          DOMAIN="lawngreen-guanaco-656732.hostingersite.com"
+          export HOSTINGER_DOMAIN="$DOMAIN"
+          export RESET_KEY="${RESET_KEY:-yaavs-reset}"
+          for i in $(seq 1 24); do
+            code=$(curl -s -o /tmp/health.json -w "%{http_code}" "https://${DOMAIN}/api/health" || true)
+            if [ "$code" = "200" ]; then echo "health ok"; break; fi
+            echo "waiting health ($i) code=$code"
+            sleep 5
+          done
+          python3 <<'PY'
+          import json, os, time, urllib.request
+          domain = os.environ.get("HOSTINGER_DOMAIN") or "lawngreen-guanaco-656732.hostingersite.com"
+          key = os.environ.get("RESET_KEY") or "yaavs-reset"
+          raw = json.load(open("responses-live.json"))
+          items = raw.get("responses") or raw.get("items") or []
+          if not items:
+              print("nothing to restore")
+              raise SystemExit(0)
+          payload = {
+              "key": key,
+              "mode": "replace",
+              "responses": [
+                  {
+                      "id": r.get("id"),
+                      "receivedAt": r.get("receivedAt"),
+                      "timestamp": r.get("timestamp"),
+                      "answers": {k: v for k, v in r.items() if k not in ("id", "receivedAt", "timestamp")},
+                  }
+                  for r in items
+              ],
+          }
+          for attempt in range(8):
+              try:
+                  req = urllib.request.Request(
+                      f"https://{domain}/api/import",
+                      data=json.dumps(payload).encode(),
+                      headers={"Content-Type": "application/json"},
+                      method="POST",
+                  )
+                  with urllib.request.urlopen(req, timeout=30) as res:
+                      body = res.read().decode()
+                      print("import", res.status, body[:300])
+                      if res.status < 300:
+                          raise SystemExit(0)
+              except SystemExit:
+                  raise
+              except Exception as e:
+                  print("import failed", e)
+                  time.sleep(3)
+          print("restore finished with errors")
+          PY
