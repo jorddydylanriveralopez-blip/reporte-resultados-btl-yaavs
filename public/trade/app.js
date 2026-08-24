@@ -7,6 +7,10 @@
   const hint = document.getElementById("formHint");
   const submitBtn = document.getElementById("submitBtn");
 
+  if (!form) {
+    console.error("[trade] No se encontró #tradeForm. ¿Se cargó /trade/app.js?");
+    return;
+  }
   function showToast(msg) {
     if (!toast) return;
     toast.textContent = msg;
@@ -48,6 +52,7 @@
 
   function fillNps() {
     const box = document.getElementById("npsScale");
+    if (!box) return;
     box.innerHTML = Array.from({ length: 11 }, (_, i) => {
       return `<label><input type="radio" name="nps" value="${i}" required /><span>${i}</span></label>`;
     }).join("");
@@ -55,7 +60,9 @@
 
   function fillChecks(boxId, name, items) {
     const box = document.getElementById(boxId);
-    box.innerHTML = items
+    if (!box) return;
+    const list = Array.isArray(items) ? items : [];
+    box.innerHTML = list
       .map(
         (label) =>
           `<label><input type="checkbox" name="${name}" value="${escapeHtml(label)}" /> <span>${escapeHtml(
@@ -67,7 +74,9 @@
 
   function fillRadios(boxId, name, items, asObjects = false) {
     const box = document.getElementById(boxId);
-    box.innerHTML = items
+    if (!box) return;
+    const list = Array.isArray(items) ? items : [];
+    box.innerHTML = list
       .map((item) => {
         const value = asObjects ? item.value : item;
         const label = asObjects ? item.label : item;

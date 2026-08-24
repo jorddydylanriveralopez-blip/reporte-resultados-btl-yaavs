@@ -17,6 +17,7 @@
 }
 
 .nps-scale label {
+  position: relative;
   display: grid;
   place-items: center;
   min-height: 48px;
@@ -228,12 +229,10 @@
   }
 
   .form-actions {
-    position: sticky;
-    bottom: 0;
-    z-index: 5;
-    margin: 0 -0.15rem;
-    padding: 0.75rem 0.15rem calc(0.75rem + env(safe-area-inset-bottom));
-    background: linear-gradient(180deg, transparent, rgba(238, 244, 250, 0.96) 28%);
+    flex-direction: column-reverse;
+    align-items: stretch;
+    margin-top: 1rem;
+    padding: 0.5rem 0 calc(0.85rem + env(safe-area-inset-bottom));
   }
 
   .btn-primary {
