@@ -4,6 +4,7 @@ const express = require("express");
 const multer = require("multer");
 const ExcelJS = require("exceljs");
 const createBuildWorkbook = require("./lib/excel-workbook");
+const createTradeApi = require("./lib/trade-api");
 
 (() => {
   try {
@@ -507,9 +508,18 @@ app.get("/api/export.csv", (_req, res) => {
 });
 
 app.get("/api/health", (_req, res) => {
+  let tradeCount = 0;
+  try {
+    const tradeFile = path.join(dataDir, "trade-responses.json");
+    if (fs.existsSync(tradeFile)) {
+      const parsed = JSON.parse(fs.readFileSync(tradeFile, "utf8"));
+      tradeCount = Array.isArray(parsed) ? parsed.length : 0;
+    }
+  } catch (_) {}
   res.json({
     ok: true,
     count: readResponses().length,
+    tradeCount,
     sheetsConfigured: Boolean(SHEETS_WEBHOOK_URL),
   });
 });
@@ -569,6 +579,8 @@ app.post("/api/import", (req, res) => {
 app.get("/resultados", (_req, res) => {
   res.sendFile(path.join(publicDir, "resultados.html"));
 });
+
+createTradeApi({ app, ExcelJS, dataDir });
 
 /** Descarga forzada de un archivo subido (evita que el navegador solo lo abra). */
 app.get("/api/download", (req, res) => {
@@ -635,5 +647,7 @@ app.use((req, res) => {
 ensureStore();
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Reporte BTL YAAVS on http://localhost:${PORT}`);
-  console.log(`Resultados: http://localhost:${PORT}/resultados`);
+  console.log(`Resultados BTL: http://localhost:${PORT}/resultados`);
+  console.log(`Encuesta Trade: http://localhost:${PORT}/trade`);
+  console.log(`Resultados Trade: http://localhost:${PORT}/trade/resultados`);
 });

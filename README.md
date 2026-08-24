@@ -1,11 +1,14 @@
-# Reporte de Resultados – Activación BTL YAAVS
+# Formularios YAAVS · Hostinger (mismo dominio)
 
-Checklist/reporte operativo de activación BTL (parte 1 del Word), separado de la encuesta de satisfacción.
-
-## En vivo (Hostinger)
+## Reporte diario Activación BTL
 
 - Formulario: https://lightslategrey-deer-478072.hostingersite.com/
 - Resultados: https://lightslategrey-deer-478072.hostingersite.com/resultados
+
+## Encuesta Trade Marketing · Punto de venta
+
+- Formulario: https://lightslategrey-deer-478072.hostingersite.com/trade
+- Resultados: https://lightslategrey-deer-478072.hostingersite.com/trade/resultados
 
 ## Local
 
@@ -14,5 +17,5 @@ npm install
 npm start
 ```
 
-- Formulario: http://localhost:3000
-- Resultados: http://localhost:3000/resultados
+- BTL: http://localhost:3000 · http://localhost:3000/resultados
+- Trade: http://localhost:3000/trade · http://localhost:3000/trade/resultados

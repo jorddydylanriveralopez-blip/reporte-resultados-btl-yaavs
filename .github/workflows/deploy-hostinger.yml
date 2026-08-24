@@ -23,6 +23,7 @@ jobs:
             -x "node_modules/*" \
             -x ".git/*" \
             -x "data/responses.json" \
+            -x "data/trade-responses.json" \
             -x ".env" \
             -x ".env.*" \
             -x ".DS_Store" \
@@ -46,7 +47,10 @@ jobs:
           DOMAIN="${HOSTINGER_DOMAIN:-lightslategrey-deer-478072.hostingersite.com}"
           curl -fsS --connect-timeout 10 --max-time 25 "https://${DOMAIN}/api/responses" -o responses-live.json \
             || echo '{"raw":[],"responses":[]}' > responses-live.json
-          python3 -c "import json; d=json.load(open('responses-live.json')); print('backed up', len(d.get('raw') or d.get('responses') or d.get('items') or []))"
+          curl -fsS --connect-timeout 10 --max-time 25 "https://${DOMAIN}/api/trade/responses" -o trade-responses-live.json \
+            || echo '{"raw":[],"responses":[]}' > trade-responses-live.json
+          python3 -c "import json; d=json.load(open('responses-live.json')); print('backed up btl', len(d.get('raw') or d.get('responses') or d.get('items') or []))"
+          python3 -c "import json; d=json.load(open('trade-responses-live.json')); print('backed up trade', len(d.get('raw') or d.get('responses') or d.get('items') or []))"
 
       - name: Upload archive and trigger Node build
         env:
@@ -315,5 +319,53 @@ jobs:
                   print("import failed", e)
                   time.sleep(3)
           print("WARN: could not restore via /api/import")
+          raise SystemExit(1)
+          PY
+          python3 <<'PY'
+          import json, os, time, urllib.request
+          domain = os.environ.get("HOSTINGER_DOMAIN") or "lightslategrey-deer-478072.hostingersite.com"
+          key = os.environ.get("RESET_KEY") or "yaavs-reset"
+          if not os.path.exists("trade-responses-live.json"):
+              print("no trade backup")
+              raise SystemExit(0)
+          data = json.load(open("trade-responses-live.json"))
+          items = data.get("raw") or []
+          if not items:
+              flat = data.get("responses") or data.get("items") or []
+              items = [
+                  {
+                      "id": r.get("id"),
+                      "receivedAt": r.get("receivedAt"),
+                      "timestamp": r.get("timestamp"),
+                      "answers": {
+                          k: v for k, v in r.items()
+                          if k not in ("id", "receivedAt", "timestamp")
+                      },
+                  }
+                  for r in flat
+              ]
+          if not items:
+              print("nothing trade to restore")
+              raise SystemExit(0)
+          payload = {"key": key, "mode": "replace", "responses": items}
+          for attempt in range(8):
+              try:
+                  req = urllib.request.Request(
+                      f"https://{domain}/api/trade/import",
+                      data=json.dumps(payload).encode(),
+                      headers={"Content-Type": "application/json"},
+                      method="POST",
+                  )
+                  with urllib.request.urlopen(req, timeout=60) as res:
+                      body = res.read().decode()
+                      print("trade import", res.status, body[:400])
+                      if res.status < 300:
+                          raise SystemExit(0)
+              except SystemExit:
+                  raise
+              except Exception as e:
+                  print("trade import failed", e)
+                  time.sleep(3)
+          print("WARN: could not restore trade via /api/trade/import")
           raise SystemExit(1)
           PY

@@ -1,0 +1,125 @@
+.nps-scale {
+  display: grid;
+  grid-template-columns: repeat(11, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.nps-scale label {
+  display: grid;
+  place-items: center;
+  min-height: 48px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 36, 64, 0.12);
+  background: #fff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: var(--navy);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nps-scale input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nps-scale label:has(input:checked) {
+  background: linear-gradient(135deg, #2563b5, #0097b2);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 8px 20px rgba(0, 151, 178, 0.25);
+}
+
+.nps-scale.is-invalid label {
+  border-color: #e07474;
+}
+
+.nps-ends {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.45rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.check-grid,
+.choice-list,
+.choice-scale {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.check-grid {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.choice-scale {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.check-grid label,
+.choice-list label,
+.choice-scale label {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 48px;
+  padding: 0.7rem 0.85rem;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 36, 64, 0.12);
+  background: #fff;
+  cursor: pointer;
+  font-weight: 650;
+  color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.check-grid input,
+.choice-list input,
+.choice-scale input {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: #0097b2;
+  flex: 0 0 auto;
+}
+
+.check-grid label:has(input:checked),
+.choice-list label:has(input:checked),
+.choice-scale label:has(input:checked) {
+  border-color: rgba(0, 151, 178, 0.45);
+  background: #f0fafc;
+  box-shadow: inset 0 0 0 1px rgba(0, 151, 178, 0.18);
+}
+
+.check-grid.is-invalid label,
+.choice-list.is-invalid label,
+.choice-scale.is-invalid label {
+  border-color: #e07474;
+}
+
+.choice-scale .scale-val {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 999px;
+  background: rgba(0, 43, 68, 0.08);
+  color: var(--navy);
+  font-size: 0.78rem;
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 720px) {
+  .nps-scale {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .nps-scale label:nth-child(11) {
+    grid-column: span 2;
+  }
+}

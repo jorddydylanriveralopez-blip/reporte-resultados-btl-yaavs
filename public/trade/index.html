@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#eef4fa" />
+    <meta
+      name="description"
+      content="Encuesta de experiencia y Trade Marketing en punto de venta – YAAVS."
+    />
+    <title>Encuesta Trade Marketing · PDV YAAVS</title>
+    <link rel="icon" href="../favicon.png" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../styles-base.css?v=20260824t1" />
+    <link rel="stylesheet" href="../reporte.css?v=20260824t1" />
+    <link rel="stylesheet" href="./trade.css?v=20260824t1" />
+  </head>
+  <body class="report-body">
+    <div class="atmosphere" aria-hidden="true">
+      <div class="wash wash-a"></div>
+      <div class="wash wash-b"></div>
+    </div>
+
+    <header class="topbar report-topbar">
+      <div class="brand">
+        <img src="../assets/logo-yaavs.png" alt="YAAVS" class="brand-logo" width="180" height="63" />
+      </div>
+      <a class="ghost-link results-link" href="./resultados">Ver respuestas</a>
+    </header>
+
+    <main class="report-main">
+      <section class="report-hero">
+        <p class="eyebrow">Punto de venta · Trade Marketing</p>
+        <h1>Encuesta de experiencia y Trade Marketing</h1>
+        <p class="lede">
+          Queremos conocer tu experiencia en el punto de venta y detectar oportunidades de mejora
+          en atención comercial, material POP y ejecución de Trade Marketing.
+        </p>
+      </section>
+
+      <form id="tradeForm" class="report-form" novalidate>
+        <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+        <section class="card-section">
+          <header class="section-head"><span>0</span><h2>Datos de identificación</h2></header>
+          <label class="field">
+            <span>Clave YAAVSER <span class="req">*</span></span>
+            <input type="text" name="claveYaavser" required placeholder="Ej. 25CL03636F32" autocomplete="off" />
+          </label>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>1</span><h2>Recomendación YAAVS</h2></header>
+          <p class="section-note">
+            En una escala de 0 a 10, ¿qué tan probable es que recomiendes YAAVS a otro negocio como el tuyo?
+          </p>
+          <div class="nps-scale" id="npsScale" role="radiogroup" aria-label="Probabilidad de recomendar YAAVS"></div>
+          <div class="nps-ends">
+            <span>0 = Nada probable</span>
+            <span>10 = Totalmente probable</span>
+          </div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>2</span><h2>Productos y servicios comercializados</h2></header>
+          <p class="section-note">¿Qué productos y servicios comercializas actualmente de YAAVS? (puedes marcar varios)</p>
+          <div class="check-grid" id="productosBox"></div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>3</span><h2>Atención del ejecutivo de ventas</h2></header>
+          <p class="section-note">¿Cómo calificarías la atención y seguimiento que recibes de tu Ejecutivo de Ventas?</p>
+          <div class="choice-scale" id="atencionBox" role="radiogroup"></div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>4</span><h2>Frecuencia de visita</h2></header>
+          <p class="section-note">¿Con qué frecuencia te visita tu Ejecutivo de Ventas en el punto de venta?</p>
+          <div class="choice-list" id="frecuenciaBox" role="radiogroup"></div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>5</span><h2>Actualización de material POP</h2></header>
+          <p class="section-note">En el último mes, ¿has recibido actualización o renovación de material POP?</p>
+          <div class="choice-list" id="actualizacionPopBox" role="radiogroup"></div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>6</span><h2>Satisfacción con el material POP</h2></header>
+          <p class="section-note">¿Qué tan satisfecho(a) estás con el material POP actualmente colocado?</p>
+          <div class="choice-scale" id="satisfaccionPopBox" role="radiogroup"></div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>7</span><h2>Calidad de la ejecución de Trade Marketing</h2></header>
+          <p class="section-note">¿Cómo calificarías la visibilidad y presentación de la marca YAAVS en tu punto de venta?</p>
+          <div class="choice-scale" id="calidadTradeBox" role="radiogroup"></div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>8</span><h2>Aspectos a mejorar del material POP</h2></header>
+          <p class="section-note">¿Qué aspecto del material POP consideras que deberíamos mejorar principalmente? (puedes marcar varios)</p>
+          <div class="check-grid" id="mejorarPopBox"></div>
+          <label class="field" id="mejorarPopOtroWrap" hidden>
+            <span>Otro (especifica) <span class="req">*</span></span>
+            <input type="text" name="mejorarPopOtro" placeholder="Describe el aspecto a mejorar" />
+          </label>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>9</span><h2>Experiencia general con YAAVS</h2></header>
+          <p class="section-note">En general, ¿qué tan satisfecho(a) estás con el apoyo que YAAVS brinda a tu negocio?</p>
+          <div class="choice-scale" id="satisfaccionGeneralBox" role="radiogroup"></div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>10</span><h2>Conocimiento de los beneficios YAAVSER</h2></header>
+          <p class="section-note">¿Conoces todos los beneficios de ser YAAVSER?</p>
+          <div class="choice-list" id="beneficiosBox" role="radiogroup"></div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>11</span><h2>Comentarios y oportunidades de mejora</h2></header>
+          <label class="field">
+            <span>¿Qué podríamos mejorar? <span class="req">*</span></span>
+            <textarea
+              name="comentarios"
+              rows="4"
+              required
+              placeholder="Trade Marketing, atención de tu Ejecutivo de Ventas o material POP… (si no hay, escribe Ninguna)"
+            ></textarea>
+          </label>
+        </section>
+
+        <div class="form-actions">
+          <p class="form-hint" id="formHint"></p>
+          <button type="submit" class="btn-primary" id="submitBtn">Enviar encuesta</button>
+        </div>
+      </form>
+
+      <section class="success-panel" id="successPanel" hidden>
+        <h2>¡Gracias por compartir tu experiencia!</h2>
+        <p>Tus respuestas nos ayudan a mejorar la atención, el material POP y el Trade Marketing en el punto de venta.</p>
+        <div class="success-actions">
+          <button type="button" class="btn-primary" id="anotherBtn">Enviar otra</button>
+          <a class="ghost-link" href="./resultados">Ver respuestas</a>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+    <script src="./config.js?v=20260824t1"></script>
+    <script src="./app.js?v=20260824t1" defer></script>
+  </body>
+</html>

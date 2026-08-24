@@ -1,6 +1,7 @@
 node_modules
 .env
 data/responses.json
+data/trade-responses.json
 .DS_Store
 *.zip
 data/uploads/

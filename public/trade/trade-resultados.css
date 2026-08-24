@@ -1,0 +1,69 @@
+.trade-charts {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.hero-panel {
+  margin: 0.5rem 0 1.1rem;
+}
+
+.hero-panel .eyebrow {
+  margin: 0 0 0.3rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cyan, #0097b2);
+  font-weight: 700;
+}
+
+.hero-panel h1 {
+  margin: 0 0 0.45rem;
+  font-family: "Space Grotesk", Outfit, sans-serif;
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  color: var(--navy);
+}
+
+.hero-panel .lede {
+  margin: 0 0 0.55rem;
+  color: var(--muted);
+  max-width: 52rem;
+}
+
+.live-line {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.live-line strong {
+  color: var(--navy);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: end;
+  margin: 1rem 0;
+}
+
+.filters label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.filters input {
+  min-height: 42px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  padding: 0.45rem 0.7rem;
+  font: inherit;
+}
+
+.item-nps {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #fff;
+}

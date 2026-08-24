@@ -1,0 +1,76 @@
+window.YAAVS_TRADE_CONFIG = {
+  submitUrl: "/api/trade/submit",
+  responsesUrl: "/api/trade/responses",
+  exportUrl: "/api/trade/export.xlsx",
+  title: "Encuesta Trade Marketing · Punto de Venta YAAVS",
+};
+
+window.YAAVS_TRADE_OPTIONS = {
+  productos: [
+    "Chips multimarca",
+    "Portabilidades",
+    "eSIM",
+    "Liberaciones",
+    "Internet inalámbrico",
+    "Tiempo aire",
+    "Planes de renta",
+  ],
+  atencion: [
+    { value: "1", label: "Pésima" },
+    { value: "2", label: "Mala" },
+    { value: "3", label: "Regular" },
+    { value: "4", label: "Buena" },
+    { value: "5", label: "Excelente" },
+  ],
+  frecuencia: [
+    "Dos o más veces por semana",
+    "Una vez por semana",
+    "Una vez cada 15 días",
+    "Una vez al mes",
+    "Con menor frecuencia",
+    "No he recibido visitas",
+  ],
+  actualizacionPop: [
+    "Sí, recientemente",
+    "Sí, pero hace varios meses",
+    "No",
+    "No estoy seguro(a)",
+  ],
+  satisfaccionPop: [
+    { value: "1", label: "Nada satisfecho(a)" },
+    { value: "2", label: "Poco satisfecho(a)" },
+    { value: "3", label: "Moderadamente satisfecho(a)" },
+    { value: "4", label: "Satisfecho(a)" },
+    { value: "5", label: "Muy satisfecho(a)" },
+  ],
+  calidadTrade: [
+    { value: "1", label: "Pésima" },
+    { value: "2", label: "Mala" },
+    { value: "3", label: "Regular" },
+    { value: "4", label: "Buena" },
+    { value: "5", label: "Excelente" },
+  ],
+  mejorarPop: [
+    "Calidad y durabilidad",
+    "Diseño y contenido",
+    "Cantidad de materiales",
+    "Tiempo de entrega",
+    "Actualización de promociones",
+    "Instalación o rotulación",
+    "Visibilidad dentro del punto de venta",
+    "Otro",
+  ],
+  satisfaccionGeneral: [
+    { value: "1", label: "Muy insatisfecho(a)" },
+    { value: "2", label: "Insatisfecho(a)" },
+    { value: "3", label: "Neutral" },
+    { value: "4", label: "Satisfecho(a)" },
+    { value: "5", label: "Muy satisfecho(a)" },
+  ],
+  beneficios: [
+    "Sí, conozco todos los beneficios",
+    "Conozco algunos beneficios",
+    "No, no conozco todos los beneficios",
+    "No conozco los beneficios",
+  ],
+};
