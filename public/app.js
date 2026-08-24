@@ -16,9 +16,6 @@
   const MAX_FILE_MB = 100;
   const IMAGE_MAX_EDGE = 1600;
   const IMAGE_JPEG_QUALITY = 0.72;
-  const MATERIAL_ENT_DEFAULT = Number(cfg.materialEntregadaDefault) || 20;
-  const MATERIAL_ENT_PASSWORD = String(cfg.materialEntregadaPassword || "Noemi2026");
-  let materialEntregadaUnlocked = false;
 
   /** @type {Record<number, File[]>} */
   const selectedFiles = {};
@@ -112,26 +109,18 @@
             <span>Fecha de entrega <span class="req">*</span></span>
             <input type="date" required data-k="fechaEntrega" aria-label="Fecha de entrega ${escapeAttr(name)}" />
           </label>
-          <label class="field field-entregada">
+          <label class="field">
             <span>Cantidad entregada <span class="req">*</span></span>
-            <div class="entregada-row">
-              <input
-                type="number"
-                min="0"
-                inputmode="numeric"
-                required
-                class="mat-ent"
-                data-k="cantidadEntregada"
-                value="${MATERIAL_ENT_DEFAULT}"
-                readonly
-                aria-readonly="true"
-                aria-label="Cantidad entregada ${escapeAttr(name)}"
-              />
-              <button type="button" class="btn-unlock-ent" data-unlock-ent="${i}" title="Desbloquear con contraseña">
-                Cambiar
-              </button>
-            </div>
-            <small class="field-hint">Por defecto ${MATERIAL_ENT_DEFAULT}. Para editar se pide contraseña.</small>
+            <input
+              type="number"
+              min="0"
+              inputmode="numeric"
+              required
+              class="mat-ent"
+              data-k="cantidadEntregada"
+              placeholder="Cantidad del día"
+              aria-label="Cantidad entregada ${escapeAttr(name)}"
+            />
           </label>
           <label class="field">
             <span>Cantidad devuelta <span class="req">*</span></span>
@@ -194,12 +183,6 @@
       }
     });
 
-    box.addEventListener("click", (e) => {
-      const btn = e.target?.closest?.("[data-unlock-ent]");
-      if (!btn) return;
-      unlockMaterialEntregada(btn);
-    });
-
     materiales.forEach((_, i) => {
       const radios = box.querySelectorAll(`input[name="mat_merma_${i}"]`);
       radios.forEach((r) =>
@@ -231,38 +214,6 @@
     }
     const used = Math.max(0, ent - dev);
     utiEl.value = String(used);
-  }
-
-  function setMaterialEntregadaEditable(unlocked) {
-    materialEntregadaUnlocked = unlocked;
-    document.querySelectorAll(".mat-ent").forEach((el) => {
-      el.readOnly = !unlocked;
-      el.setAttribute("aria-readonly", unlocked ? "false" : "true");
-    });
-    document.querySelectorAll("[data-unlock-ent]").forEach((btn) => {
-      btn.textContent = unlocked ? "Desbloqueado" : "Cambiar";
-      btn.classList.toggle("is-unlocked", unlocked);
-      btn.disabled = unlocked;
-    });
-  }
-
-  function unlockMaterialEntregada(btn) {
-    if (materialEntregadaUnlocked) {
-      showToast("Cantidad entregada ya desbloqueada");
-      return;
-    }
-    const typed = window.prompt("Contraseña para cambiar la cantidad entregada:");
-    if (typed == null) return;
-    if (String(typed).trim() !== MATERIAL_ENT_PASSWORD) {
-      showToast("Contraseña incorrecta");
-      return;
-    }
-    setMaterialEntregadaEditable(true);
-    showToast("Cantidad entregada desbloqueada");
-    const card = btn.closest(".material-card");
-    const input = card?.querySelector(".mat-ent");
-    input?.focus();
-    input?.select?.();
   }
 
   function updateMaterialTotals() {
@@ -993,16 +944,12 @@
     resetEvidence();
     resetMaterialMerma();
     setIncidenciaDetalleOpen(false);
-    document.querySelectorAll(".mat-ent").forEach((el) => {
-      el.value = String(MATERIAL_ENT_DEFAULT);
-    });
-    document.querySelectorAll(".mat-dev").forEach((el) => {
+    document.querySelectorAll(".mat-ent, .mat-dev").forEach((el) => {
       el.value = "";
     });
     document.querySelectorAll("#materialList .material-card").forEach((card) => {
       calcMaterialUtilizada(card);
     });
-    setMaterialEntregadaEditable(false);
     updateMaterialTotals();
     calcIndicadores();
     successPanel.hidden = true;

@@ -180,49 +180,6 @@
   box-shadow: none;
 }
 
-.entregada-row {
-  display: flex;
-  gap: 0.5rem;
-  align-items: stretch;
-}
-
-.entregada-row .mat-ent {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.btn-unlock-ent {
-  flex: 0 0 auto;
-  border: 1px solid rgba(0, 43, 68, 0.18);
-  background: #fff;
-  color: #002b44;
-  border-radius: 0.75rem;
-  padding: 0 0.85rem;
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.btn-unlock-ent:hover:not(:disabled) {
-  border-color: var(--teal);
-  color: #014866;
-}
-
-.btn-unlock-ent:disabled,
-.btn-unlock-ent.is-unlocked {
-  opacity: 0.72;
-  cursor: default;
-  background: #eef4fa;
-}
-
-.field-entregada .mat-ent[readonly] {
-  background: #eef4fa;
-  color: #335066;
-  cursor: default;
-}
-
 .field-hint {
   display: block;
   margin-top: -0.15rem;
