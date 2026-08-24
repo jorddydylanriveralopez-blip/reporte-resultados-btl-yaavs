@@ -185,12 +185,22 @@
       charts[name].update();
       return;
     }
+    const narrow = window.matchMedia("(max-width: 720px)").matches;
     charts[name] = new Chart(canvas, {
       type: "doughnut",
       data,
       options: {
+        responsive: true,
+        maintainAspectRatio: true,
         plugins: {
-          legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } },
+          legend: {
+            position: "bottom",
+            labels: {
+              boxWidth: narrow ? 10 : 12,
+              font: { size: narrow ? 10 : 11 },
+              padding: narrow ? 8 : 12,
+            },
+          },
         },
         cutout: "58%",
       },

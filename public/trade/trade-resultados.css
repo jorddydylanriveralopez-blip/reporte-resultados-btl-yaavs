@@ -1,5 +1,63 @@
+/* Trade results — layout + multi-device */
+
+body {
+  overflow-x: clip;
+  min-width: 0;
+}
+
+.topbar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  width: min(1120px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: max(0.9rem, env(safe-area-inset-top)) 0 0.35rem;
+}
+
+.topbar .brand {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.topbar .brand-logo {
+  width: min(150px, 42vw);
+  height: auto;
+  display: block;
+}
+
+.top-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.topbar .btn-quiet {
+  background: rgba(0, 43, 68, 0.06);
+  color: var(--navy);
+  border: 1px solid rgba(0, 43, 68, 0.12);
+  min-height: 42px;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.86rem;
+  touch-action: manipulation;
+}
+
+.wrap {
+  position: relative;
+  z-index: 1;
+  width: min(1120px, calc(100% - 2rem));
+  margin: 0 auto max(2.75rem, env(safe-area-inset-bottom));
+  padding-bottom: 1rem;
+}
+
 .hero-panel {
-  margin: 0.35rem 0 1.35rem;
+  margin: 0.5rem 0 1.35rem;
 }
 
 .hero-panel .eyebrow {
@@ -14,9 +72,10 @@
 .hero-panel h1 {
   margin: 0 0 0.5rem;
   font-family: "Space Grotesk", Outfit, sans-serif;
-  font-size: clamp(1.55rem, 3.2vw, 2.15rem);
+  font-size: clamp(1.4rem, 3.2vw, 2.15rem);
   color: var(--navy);
   letter-spacing: -0.03em;
+  line-height: 1.15;
 }
 
 .hero-panel .lede {
@@ -36,7 +95,6 @@
   color: var(--navy);
 }
 
-/* KPI cards — avoid the cramped single-line metrics strip */
 #metrics.metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -62,16 +120,17 @@
   font-size: 0.68rem;
   letter-spacing: 0.06em;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 #metrics .metric strong {
   margin-top: 0.45rem;
-  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  font-size: clamp(1.25rem, 2.4vw, 1.75rem);
   line-height: 1.15;
 }
 
 #metrics .metric-time strong {
-  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  font-size: clamp(1rem, 2vw, 1.25rem);
   font-variant-numeric: tabular-nums;
 }
 
@@ -80,12 +139,14 @@
 }
 
 .trade-charts {
+  display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.15rem;
 }
 
 .trade-charts .chart-card {
   min-height: 280px;
+  min-width: 0;
   padding: 1.15rem 1.2rem 1.1rem;
   display: flex;
   flex-direction: column;
@@ -98,6 +159,7 @@
 
 .trade-charts .chart-card canvas {
   flex: 1 1 auto;
+  width: 100% !important;
   max-height: 220px;
 }
 
@@ -108,8 +170,8 @@
 }
 
 .filters {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr)) auto;
   gap: 0.85rem 1rem;
   align-items: end;
   margin: 1.75rem 0 1.15rem;
@@ -122,14 +184,16 @@
 .filters label {
   display: grid;
   gap: 0.3rem;
+  min-width: 0;
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--muted);
 }
 
 .filters input {
-  min-height: 42px;
-  min-width: 11rem;
+  width: 100%;
+  min-height: 44px;
+  min-width: 0;
   border-radius: 12px;
   border: 1px solid var(--line);
   padding: 0.45rem 0.7rem;
@@ -137,12 +201,59 @@
   background: #fff;
 }
 
+.filters .btn-text {
+  min-height: 44px;
+  padding: 0.45rem 0.75rem;
+  border: 0;
+  background: transparent;
+  color: var(--navy);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.board.board-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+}
+
 .item-nps {
-  font-size: 1.35rem;
+  font-size: clamp(1.1rem, 3vw, 1.35rem);
   font-weight: 800;
   color: #fff;
 }
 
+.item-line {
+  overflow-wrap: anywhere;
+}
+
+.modal {
+  width: min(560px, calc(100vw - 1.25rem));
+  max-height: min(88vh, 900px);
+  margin: auto;
+  border: 0;
+  border-radius: 18px;
+  padding: 0;
+}
+
+.modal-body {
+  max-height: min(52vh, 420px);
+}
+
+.modal-row {
+  grid-template-columns: minmax(7rem, 34%) minmax(0, 1fr);
+  gap: 0.55rem 0.85rem;
+}
+
+.modal-row span {
+  overflow-wrap: anywhere;
+}
+
+.group-head h2 {
+  font-size: clamp(1.05rem, 2.5vw, 1.25rem);
+}
+
+/* Large tablet / small laptop */
 @media (max-width: 1100px) {
   #metrics.metrics {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -151,28 +262,169 @@
   .trade-charts {
     grid-template-columns: 1fr 1fr;
   }
+
+  .filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .filters .btn-text {
+    justify-self: start;
+  }
 }
 
-@media (max-width: 720px) {
+/* Tablet */
+@media (max-width: 900px) and (min-width: 721px) {
+  .topbar,
+  .wrap {
+    width: calc(100% - 1.5rem);
+  }
+
   #metrics.metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.65rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.7rem;
   }
 
   #metrics .metric {
     padding: 0.85rem 0.9rem;
   }
 
+  .board.board-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Phone */
+@media (max-width: 720px) {
+  .topbar,
+  .wrap {
+    width: calc(100% - 1rem);
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+  }
+
+  .top-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.4rem;
+  }
+
+  .topbar .btn-quiet {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.45rem 0.35rem;
+    font-size: 0.78rem;
+    text-align: center;
+  }
+
+  .hero-panel {
+    margin-bottom: 1.1rem;
+  }
+
+  .hero-panel h1 {
+    font-size: clamp(1.3rem, 6vw, 1.7rem);
+  }
+
+  .hero-panel .lede {
+    font-size: 0.92rem;
+  }
+
+  #metrics.metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+    margin-bottom: 1.15rem;
+  }
+
+  #metrics .metric {
+    padding: 0.8rem 0.75rem;
+  }
+
+  #metrics .metric span {
+    font-size: 0.62rem;
+  }
+
+  #metrics .metric strong {
+    font-size: 1.2rem;
+  }
+
   .trade-charts {
     grid-template-columns: 1fr;
+    gap: 0.85rem;
   }
 
   .trade-charts .chart-card {
     min-height: 240px;
+    padding: 1rem;
   }
 
-  .filters input {
-    min-width: 0;
+  .filters {
+    grid-template-columns: 1fr;
+    padding: 0.85rem 0.9rem;
+    margin: 1.25rem 0 1rem;
+  }
+
+  .board.board-grid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .item-actions {
+    padding-bottom: max(0.85rem, env(safe-area-inset-bottom));
+  }
+
+  .item-actions .btn {
+    flex: 1;
+    min-height: 44px;
+  }
+
+  .modal {
+    width: calc(100vw - 0.75rem);
+    max-height: calc(100dvh - 0.75rem);
+    border-radius: 14px;
+  }
+
+  .modal-row {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+
+  .modal-row b {
+    font-size: 0.72rem;
+  }
+
+  .modal-body {
+    max-height: min(58dvh, 480px);
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .modal-actions .btn,
+  .modal-actions .btn-soft {
     width: 100%;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 380px) {
+  #metrics.metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .top-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item:hover {
+    transform: none;
   }
 }
