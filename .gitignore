@@ -1,7 +1,9 @@
-node_modules
+*.zip
+.DS_Store
 .env
+.tmp-encuesta-create/
+.tmp-encuesta-deploy/
 data/responses.json
 data/trade-responses.json
-.DS_Store
-*.zip
 data/uploads/
+node_modules
