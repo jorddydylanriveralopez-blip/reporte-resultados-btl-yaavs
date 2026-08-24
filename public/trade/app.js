@@ -105,10 +105,28 @@
     }
   }
 
+  function syncRedesSociales() {
+    const wrap = document.getElementById("redesSocialesWrap");
+    const box = document.getElementById("redesSocialesBox");
+    const sigue = form.querySelector('input[name="sigueRedes"]:checked')?.value || "";
+    const open = sigue === "Sí";
+    wrap.hidden = !open;
+    box.querySelectorAll("input").forEach((el) => {
+      if (!open) {
+        el.checked = false;
+        el.removeAttribute("required");
+      } else {
+        el.setAttribute("required", "required");
+      }
+    });
+    if (!open) box.classList.remove("is-invalid");
+  }
+
   function collectAnswers() {
     const fd = new FormData(form);
     const productos = [...form.querySelectorAll('input[name="productos"]:checked')].map((el) => el.value);
     const mejorarPop = [...form.querySelectorAll('input[name="mejorarPop"]:checked')].map((el) => el.value);
+    const sigueRedes = String(fd.get("sigueRedes") || "").trim();
     return {
       claveYaavser: String(fd.get("claveYaavser") || "").trim(),
       nps: String(fd.get("nps") || "").trim(),
@@ -122,6 +140,8 @@
       mejorarPopOtro: String(fd.get("mejorarPopOtro") || "").trim(),
       satisfaccionGeneral: String(fd.get("satisfaccionGeneral") || "").trim(),
       conocimientoBeneficios: String(fd.get("conocimientoBeneficios") || "").trim(),
+      sigueRedes,
+      redesSociales: sigueRedes === "Sí" ? String(fd.get("redesSociales") || "").trim() : "",
       comentarios: String(fd.get("comentarios") || "").trim(),
     };
   }
@@ -176,6 +196,14 @@
       markInvalid(document.getElementById("beneficiosBox"));
       return "Indica qué tanto conoces los beneficios YAAVSER.";
     }
+    if (isBlank(a.sigueRedes)) {
+      markInvalid(document.getElementById("sigueRedesBox"));
+      return "Indica si nos sigues en redes sociales.";
+    }
+    if (a.sigueRedes === "Sí" && isBlank(a.redesSociales)) {
+      markInvalid(document.getElementById("redesSocialesBox"));
+      return "Selecciona Instagram, Facebook o Ambas.";
+    }
     if (isBlank(a.comentarios)) {
       markInvalid(form.elements.namedItem("comentarios"));
       return "Escribe comentarios (si no hay, “Ninguna”).";
@@ -190,6 +218,7 @@
       "is-invalid",
     );
     if (t?.name === "mejorarPop") syncMejorarOtro();
+    if (t?.name === "sigueRedes") syncRedesSociales();
   });
 
   form.addEventListener("submit", async (e) => {
@@ -231,6 +260,7 @@
     form.reset();
     clearInvalid();
     syncMejorarOtro();
+    syncRedesSociales();
     successPanel.hidden = true;
     form.hidden = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -246,5 +276,8 @@
   fillChecks("mejorarPopBox", "mejorarPop", opts.mejorarPop || []);
   fillRadios("satisfaccionGeneralBox", "satisfaccionGeneral", opts.satisfaccionGeneral || [], true);
   fillRadios("beneficiosBox", "conocimientoBeneficios", opts.beneficios || []);
+  fillRadios("sigueRedesBox", "sigueRedes", opts.sigueRedes || []);
+  fillRadios("redesSocialesBox", "redesSociales", opts.redesSociales || []);
   syncMejorarOtro();
+  syncRedesSociales();
 })();

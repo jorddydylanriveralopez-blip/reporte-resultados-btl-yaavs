@@ -73,4 +73,6 @@ window.YAAVS_TRADE_OPTIONS = {
     "No, no conozco todos los beneficios",
     "No conozco los beneficios",
   ],
+  sigueRedes: ["Sí", "No"],
+  redesSociales: ["Instagram", "Facebook", "Ambas"],
 };

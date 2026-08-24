@@ -31,6 +31,8 @@
     mejorarPopOtro: "Otro (POP)",
     satisfaccionGeneral: "Satisfacción general",
     conocimientoBeneficios: "Beneficios YAAVSER",
+    sigueRedes: "¿Nos sigue en redes?",
+    redesSociales: "Redes sociales",
     comentarios: "Comentarios",
   };
 
@@ -108,6 +110,8 @@
           r.frecuenciaVisita,
           r.mejorarPop,
           r.mejorarPopOtro,
+          r.sigueRedes,
+          r.redesSociales,
         ]
           .join(" ")
           .toLowerCase();
