@@ -628,6 +628,7 @@ app.use(
     extensions: ["html"],
     etag: false,
     lastModified: false,
+    redirect: false,
     setHeaders(res, filePath) {
       if (filePath.endsWith(".html")) res.setHeader("Cache-Control", "no-store");
       else if (filePath.endsWith(".css") || filePath.endsWith(".js")) {

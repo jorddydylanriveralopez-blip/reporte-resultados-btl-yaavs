@@ -9,6 +9,7 @@
 
 - Formulario: https://lightslategrey-deer-478072.hostingersite.com/trade
 - Resultados: https://lightslategrey-deer-478072.hostingersite.com/trade/resultados
+- Alternativa (si el navegador cacheó un redirect viejo): https://lightslategrey-deer-478072.hostingersite.com/encuesta-trade
 
 ## Local
 
