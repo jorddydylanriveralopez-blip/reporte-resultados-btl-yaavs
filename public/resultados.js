@@ -1233,30 +1233,49 @@
   document.getElementById("btnInvCsv")?.addEventListener("click", downloadInventoryCsv);
   document.getElementById("btnVentasProdCsv")?.addEventListener("click", downloadVentasProductoCsv);
 
+  async function downloadXlsx(endpoint, filenamePrefix) {
+    const url = `${endpoint}?ts=${Date.now()}`;
+    const res = await fetch(url, {
+      cache: "no-store",
+      headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+    });
+    if (!res.ok) throw new Error("export failed");
+    const blob = await res.blob();
+    const stamp = new Date().toISOString().slice(0, 10);
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = objectUrl;
+    a.download = `${filenamePrefix}_${stamp}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(objectUrl);
+  }
+
   document.getElementById("btnExcel").addEventListener("click", async () => {
     const btn = document.getElementById("btnExcel");
     const prev = btn.textContent;
     btn.disabled = true;
     btn.textContent = "Generando…";
     try {
-      const url = `./api/export.xlsx?ts=${Date.now()}`;
-      const res = await fetch(url, {
-        cache: "no-store",
-        headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
-      });
-      if (!res.ok) throw new Error("export failed");
-      const blob = await res.blob();
-      const stamp = new Date().toISOString().slice(0, 10);
-      const objectUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = objectUrl;
-      a.download = `Reporte_Resultados_BTL_YAAVS_${stamp}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(objectUrl);
+      await downloadXlsx("./api/export.xlsx", "Reporte_Resultados_BTL_YAAVS");
     } catch (_) {
       window.location.href = `./api/export.xlsx?ts=${Date.now()}`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = prev;
+    }
+  });
+
+  document.getElementById("btnTablero")?.addEventListener("click", async () => {
+    const btn = document.getElementById("btnTablero");
+    const prev = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Generando tablero…";
+    try {
+      await downloadXlsx("./api/tablero-activacion.xlsx", "ACTIVACION_BTL");
+    } catch (_) {
+      window.location.href = `./api/tablero-activacion.xlsx?ts=${Date.now()}`;
     } finally {
       btn.disabled = false;
       btn.textContent = prev;

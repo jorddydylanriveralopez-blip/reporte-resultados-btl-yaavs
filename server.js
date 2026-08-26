@@ -4,6 +4,7 @@ const express = require("express");
 const multer = require("multer");
 const ExcelJS = require("exceljs");
 const createBuildWorkbook = require("./lib/excel-workbook");
+const createTableroActivacion = require("./lib/tablero-activacion");
 const createTradeApi = require("./lib/trade-api");
 
 (() => {
@@ -376,6 +377,7 @@ function sortedItems() {
 }
 
 const buildWorkbookImpl = createBuildWorkbook({ ExcelJS, path, fs, publicDir });
+const tableroActivacion = createTableroActivacion({ ExcelJS });
 
 async function buildWorkbook(items, rawList = []) {
   return buildWorkbookImpl(items, rawList, {
@@ -472,6 +474,49 @@ app.get("/api/export.xlsx", async (_req, res) => {
 
 app.get("/api/descargar-excel", (req, res) => {
   res.redirect(302, `/api/export.xlsx?ts=${Date.now()}`);
+});
+
+app.get("/api/tablero-activacion", async (_req, res) => {
+  try {
+    const rawList = readResponses();
+    const solicitudes = await tableroActivacion.fetchSolicitudes();
+    const rows = tableroActivacion.buildTableroRows(solicitudes, rawList);
+    res.json({
+      ok: true,
+      count: rows.length,
+      reportes: rawList.length,
+      rows,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, error: "No se pudo generar el tablero" });
+  }
+});
+
+app.get("/api/tablero-activacion.xlsx", async (_req, res) => {
+  try {
+    const rawList = readResponses();
+    const { workbook } = await tableroActivacion.buildTableroWorkbook(rawList);
+    const stamp = new Date().toISOString().slice(0, 10);
+    const filename = `ACTIVACION_BTL_${stamp}.xlsx`;
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+    );
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private, max-age=0");
+    res.setHeader("CDN-Cache-Control", "no-store");
+    res.setHeader("Surrogate-Control", "no-store");
+    res.setHeader("Pragma", "no-cache");
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, error: "No se pudo generar el tablero ACTIVACION BTL" });
+  }
 });
 
 app.get("/api/export.csv", (_req, res) => {
