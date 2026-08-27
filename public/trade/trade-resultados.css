@@ -234,10 +234,26 @@ body {
   border: 0;
   border-radius: 18px;
   padding: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.modal .modal-sheet {
+  position: relative;
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(2, 28, 46, 0.28);
 }
 
 .modal-body {
   max-height: min(52vh, 420px);
+  background: #fff;
+  color: var(--ink, #071824);
+}
+
+.modal-actions {
+  background: #fff;
 }
 
 .modal-row {
@@ -247,6 +263,7 @@ body {
 
 .modal-row span {
   overflow-wrap: anywhere;
+  color: var(--ink, #071824);
 }
 
 .group-head h2 {
