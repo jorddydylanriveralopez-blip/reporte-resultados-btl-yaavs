@@ -16,9 +16,9 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/styles-base.css?v=20260827t1" />
-    <link rel="stylesheet" href="/reporte.css?v=20260827t1" />
-    <link rel="stylesheet" href="/trade/trade.css?v=20260827t1" />
+    <link rel="stylesheet" href="/styles-base.css?v=20260827t2" />
+    <link rel="stylesheet" href="/reporte.css?v=20260827t2" />
+    <link rel="stylesheet" href="/trade/trade.css?v=20260827t2" />
   </head>
   <body class="report-body">
     <div class="atmosphere" aria-hidden="true">
@@ -82,19 +82,29 @@
         </section>
 
         <section class="card-section">
-          <header class="section-head"><span>4</span><h2>Atención del ejecutivo de ventas</h2></header>
+          <header class="section-head"><span>4</span><h2>Carrier con mayor volumen de ventas</h2></header>
+          <p class="section-note">¿Qué carrier tiene mayor volumen de ventas en este punto de venta?</p>
+          <div class="choice-list" id="carrierVolumenBox" role="radiogroup"></div>
+          <label class="field" id="carrierVolumenOtroWrap" hidden>
+            <span>Otro (especifica) <span class="req">*</span></span>
+            <input type="text" name="carrierVolumenOtro" placeholder="Nombre del carrier" />
+          </label>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>5</span><h2>Atención del ejecutivo de ventas</h2></header>
           <p class="section-note">¿Cómo calificarías la atención y seguimiento que recibes de tu Ejecutivo de Ventas?</p>
           <div class="choice-scale" id="atencionBox" role="radiogroup"></div>
         </section>
 
         <section class="card-section">
-          <header class="section-head"><span>5</span><h2>Frecuencia de visita</h2></header>
+          <header class="section-head"><span>6</span><h2>Frecuencia de visita</h2></header>
           <p class="section-note">¿Con qué frecuencia te visita tu Ejecutivo de Ventas en el punto de venta?</p>
           <div class="choice-list" id="frecuenciaBox" role="radiogroup"></div>
         </section>
 
         <section class="card-section">
-          <header class="section-head"><span>6</span><h2>Material POP recibido</h2></header>
+          <header class="section-head"><span>7</span><h2>Material POP recibido</h2></header>
           <p class="section-note">¿Qué material POP has recibido? (puedes marcar varios)</p>
           <div class="check-grid" id="materialPopBox"></div>
           <label class="field" id="materialPopOtroWrap" hidden>
@@ -104,19 +114,19 @@
         </section>
 
         <section class="card-section">
-          <header class="section-head"><span>7</span><h2>Calidad de la ejecución del Ejecutivo de Ventas</h2></header>
+          <header class="section-head"><span>8</span><h2>Calidad de la ejecución del Ejecutivo de Ventas</h2></header>
           <p class="section-note">¿Cómo calificarías la calidad de la ejecución de tu Ejecutivo de Ventas?</p>
           <div class="choice-scale" id="calidadEjecutivoBox" role="radiogroup"></div>
         </section>
 
         <section class="card-section">
-          <header class="section-head"><span>8</span><h2>Conocimiento de los beneficios YAAVSER</h2></header>
+          <header class="section-head"><span>9</span><h2>Conocimiento de los beneficios YAAVSER</h2></header>
           <p class="section-note">¿Conoces todos los beneficios de ser YAAVSER?</p>
           <div class="choice-list" id="beneficiosBox" role="radiogroup"></div>
         </section>
 
         <section class="card-section">
-          <header class="section-head"><span>9</span><h2>Redes sociales</h2></header>
+          <header class="section-head"><span>10</span><h2>Redes sociales</h2></header>
           <p class="section-note">¿Nos sigues en redes sociales?</p>
           <div class="choice-list" id="sigueRedesBox" role="radiogroup"></div>
           <div id="redesSocialesWrap" hidden>
@@ -126,7 +136,7 @@
         </section>
 
         <section class="card-section">
-          <header class="section-head"><span>10</span><h2>Otro distribuidor</h2></header>
+          <header class="section-head"><span>11</span><h2>Otro distribuidor</h2></header>
           <p class="section-note">¿Trabajas con otro distribuidor?</p>
           <div class="choice-list" id="otroDistribuidorBox" role="radiogroup"></div>
           <div id="otroDistribuidorWrap" hidden>
@@ -142,7 +152,7 @@
         </section>
 
         <section class="card-section">
-          <header class="section-head"><span>11</span><h2>Comentarios y oportunidades de mejora</h2></header>
+          <header class="section-head"><span>12</span><h2>Comentarios y oportunidades de mejora</h2></header>
           <label class="field">
             <span>¿Qué podríamos mejorar? <span class="req">*</span></span>
             <textarea
@@ -170,7 +180,7 @@
     </main>
 
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-    <script src="/trade/config.js?v=20260827t1"></script>
-    <script src="/trade/app.js?v=20260827t1" defer></script>
+    <script src="/trade/config.js?v=20260827t2"></script>
+    <script src="/trade/app.js?v=20260827t2" defer></script>
   </body>
 </html>

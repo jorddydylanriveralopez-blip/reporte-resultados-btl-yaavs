@@ -15,6 +15,7 @@ window.YAAVS_TRADE_OPTIONS = {
     "Tiempo aire",
     "Planes de renta",
   ],
+  carrierVolumen: ["Telcel", "AT&T", "Movistar", "BAIT", "Otro"],
   atencion: [
     { value: "1", label: "Pésima" },
     { value: "2", label: "Mala" },

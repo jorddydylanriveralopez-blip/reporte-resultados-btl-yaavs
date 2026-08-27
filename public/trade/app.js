@@ -91,6 +91,21 @@
       .join("");
   }
 
+  function syncCarrierVolumenOtro() {
+    const val = form.querySelector('input[name="carrierVolumen"]:checked')?.value || "";
+    const wrap = document.getElementById("carrierVolumenOtroWrap");
+    const input = form.elements.namedItem("carrierVolumenOtro");
+    const open = val === "Otro";
+    wrap.hidden = !open;
+    if (!open) {
+      input.value = "";
+      input.removeAttribute("required");
+      input.classList.remove("is-invalid");
+    } else {
+      input.setAttribute("required", "required");
+    }
+  }
+
   function syncMaterialPopOtro() {
     const checked = [...form.querySelectorAll('input[name="materialPop"]:checked')].map((el) => el.value);
     const wrap = document.getElementById("materialPopOtroWrap");
@@ -156,6 +171,8 @@
       nps: String(fd.get("nps") || "").trim(),
       npsPorque: String(fd.get("npsPorque") || "").trim(),
       productos,
+      carrierVolumen: String(fd.get("carrierVolumen") || "").trim(),
+      carrierVolumenOtro: String(fd.get("carrierVolumenOtro") || "").trim(),
       atencionEjecutivo: String(fd.get("atencionEjecutivo") || "").trim(),
       frecuenciaVisita: String(fd.get("frecuenciaVisita") || "").trim(),
       materialPop,
@@ -193,6 +210,14 @@
     if (!a.productos.length) {
       markInvalid(document.getElementById("productosBox"));
       return "Marca al menos un producto o servicio.";
+    }
+    if (isBlank(a.carrierVolumen)) {
+      markInvalid(document.getElementById("carrierVolumenBox"));
+      return "Indica qué carrier tiene mayor volumen de ventas.";
+    }
+    if (a.carrierVolumen === "Otro" && isBlank(a.carrierVolumenOtro)) {
+      markInvalid(form.elements.namedItem("carrierVolumenOtro"));
+      return "Especifica el otro carrier.";
     }
     if (isBlank(a.atencionEjecutivo)) {
       markInvalid(document.getElementById("atencionBox"));
@@ -251,6 +276,7 @@
     t?.closest?.(".nps-scale, .check-grid, .choice-list, .choice-scale, .field")?.classList.remove(
       "is-invalid",
     );
+    if (t?.name === "carrierVolumen") syncCarrierVolumenOtro();
     if (t?.name === "materialPop") syncMaterialPopOtro();
     if (t?.name === "sigueRedes") syncRedesSociales();
     if (t?.name === "otroDistribuidor") syncOtroDistribuidor();
@@ -294,6 +320,7 @@
   document.getElementById("anotherBtn")?.addEventListener("click", () => {
     form.reset();
     clearInvalid();
+    syncCarrierVolumenOtro();
     syncMaterialPopOtro();
     syncRedesSociales();
     syncOtroDistribuidor();
@@ -305,6 +332,7 @@
   fillNps();
   fillRadios("satisfaccionGeneralBox", "satisfaccionGeneral", opts.satisfaccionGeneral || [], true);
   fillChecks("productosBox", "productos", opts.productos || []);
+  fillRadios("carrierVolumenBox", "carrierVolumen", opts.carrierVolumen || []);
   fillRadios("atencionBox", "atencionEjecutivo", opts.atencion || [], true);
   fillRadios("frecuenciaBox", "frecuenciaVisita", opts.frecuencia || []);
   fillChecks("materialPopBox", "materialPop", opts.materialPop || []);
