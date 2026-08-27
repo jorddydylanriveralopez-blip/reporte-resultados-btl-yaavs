@@ -27,6 +27,7 @@ window.YAAVS_TRADE_OPTIONS = {
     "Dos o más veces por semana",
     "Una vez por semana",
     "Una vez cada 15 días",
+    "No me visitan",
   ],
   materialPop: [
     "Lona",
