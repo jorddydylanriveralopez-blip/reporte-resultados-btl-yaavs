@@ -16,9 +16,9 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/styles-base.css?v=20260824t8" />
-    <link rel="stylesheet" href="/reporte.css?v=20260824t8" />
-    <link rel="stylesheet" href="/trade/trade.css?v=20260824t8" />
+    <link rel="stylesheet" href="/styles-base.css?v=20260827t1" />
+    <link rel="stylesheet" href="/reporte.css?v=20260827t1" />
+    <link rel="stylesheet" href="/trade/trade.css?v=20260827t1" />
   </head>
   <body class="report-body">
     <div class="atmosphere" aria-hidden="true">
@@ -54,87 +54,95 @@
         </section>
 
         <section class="card-section">
-          <header class="section-head"><span>1</span><h2>Recomendación YAAVS</h2></header>
-          <p class="section-note">
-            En una escala de 0 a 10, ¿qué tan probable es que recomiendes YAAVS a otro negocio como el tuyo?
-          </p>
-          <div class="nps-scale" id="npsScale" role="radiogroup" aria-label="Probabilidad de recomendar YAAVS"></div>
-          <div class="nps-ends">
-            <span>0 = Nada probable</span>
-            <span>10 = Totalmente probable</span>
-          </div>
-        </section>
-
-        <section class="card-section">
-          <header class="section-head"><span>2</span><h2>Productos y servicios comercializados</h2></header>
-          <p class="section-note">¿Qué productos y servicios comercializas actualmente de YAAVS? (puedes marcar varios)</p>
-          <div class="check-grid" id="productosBox"></div>
-        </section>
-
-        <section class="card-section">
-          <header class="section-head"><span>3</span><h2>Atención del ejecutivo de ventas</h2></header>
-          <p class="section-note">¿Cómo calificarías la atención y seguimiento que recibes de tu Ejecutivo de Ventas?</p>
-          <div class="choice-scale" id="atencionBox" role="radiogroup"></div>
-        </section>
-
-        <section class="card-section">
-          <header class="section-head"><span>4</span><h2>Frecuencia de visita</h2></header>
-          <p class="section-note">¿Con qué frecuencia te visita tu Ejecutivo de Ventas en el punto de venta?</p>
-          <div class="choice-list" id="frecuenciaBox" role="radiogroup"></div>
-        </section>
-
-        <section class="card-section">
-          <header class="section-head"><span>5</span><h2>Actualización de material POP</h2></header>
-          <p class="section-note">En el último mes, ¿has recibido actualización o renovación de material POP?</p>
-          <div class="choice-list" id="actualizacionPopBox" role="radiogroup"></div>
-        </section>
-
-        <section class="card-section">
-          <header class="section-head"><span>6</span><h2>Satisfacción con el material POP</h2></header>
-          <p class="section-note">¿Qué tan satisfecho(a) estás con el material POP actualmente colocado?</p>
-          <div class="choice-scale" id="satisfaccionPopBox" role="radiogroup"></div>
-        </section>
-
-        <section class="card-section">
-          <header class="section-head"><span>7</span><h2>Calidad de la ejecución de Trade Marketing</h2></header>
-          <p class="section-note">¿Cómo calificarías la visibilidad y presentación de la marca YAAVS en tu punto de venta?</p>
-          <div class="choice-scale" id="calidadTradeBox" role="radiogroup"></div>
-        </section>
-
-        <section class="card-section">
-          <header class="section-head"><span>8</span><h2>Aspectos a mejorar del material POP</h2></header>
-          <p class="section-note">¿Qué aspecto del material POP consideras que deberíamos mejorar principalmente? (puedes marcar varios)</p>
-          <div class="check-grid" id="mejorarPopBox"></div>
-          <label class="field" id="mejorarPopOtroWrap" hidden>
-            <span>Otro (especifica) <span class="req">*</span></span>
-            <input type="text" name="mejorarPopOtro" placeholder="Describe el aspecto a mejorar" />
-          </label>
-        </section>
-
-        <section class="card-section">
-          <header class="section-head"><span>9</span><h2>Experiencia general con YAAVS</h2></header>
+          <header class="section-head"><span>1</span><h2>Experiencia general con YAAVS</h2></header>
           <p class="section-note">En general, ¿qué tan satisfecho(a) estás con el apoyo que YAAVS brinda a tu negocio?</p>
           <div class="choice-scale" id="satisfaccionGeneralBox" role="radiogroup"></div>
         </section>
 
         <section class="card-section">
-          <header class="section-head"><span>10</span><h2>Conocimiento de los beneficios YAAVSER</h2></header>
+          <header class="section-head"><span>2</span><h2>Recomendación YAAVS</h2></header>
+          <p class="section-note">
+            En una escala del 1 al 5, ¿qué tan probable es que recomiendes YAAVS a otro negocio como el tuyo?
+          </p>
+          <div class="nps-scale nps-scale-5" id="npsScale" role="radiogroup" aria-label="Probabilidad de recomendar YAAVS"></div>
+          <div class="nps-ends">
+            <span>1 = Nada probable</span>
+            <span>5 = Totalmente probable</span>
+          </div>
+          <label class="field" style="margin-top: 0.85rem">
+            <span>¿Por qué? <span class="req">*</span></span>
+            <textarea name="npsPorque" rows="2" required placeholder="Cuéntanos brevemente tu calificación"></textarea>
+          </label>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>3</span><h2>Productos y servicios comercializados</h2></header>
+          <p class="section-note">¿Qué otros productos o servicios comercializas más de YAAVS? (puedes marcar varios)</p>
+          <div class="check-grid" id="productosBox"></div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>4</span><h2>Atención del ejecutivo de ventas</h2></header>
+          <p class="section-note">¿Cómo calificarías la atención y seguimiento que recibes de tu Ejecutivo de Ventas?</p>
+          <div class="choice-scale" id="atencionBox" role="radiogroup"></div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>5</span><h2>Frecuencia de visita</h2></header>
+          <p class="section-note">¿Con qué frecuencia te visita tu Ejecutivo de Ventas en el punto de venta?</p>
+          <div class="choice-list" id="frecuenciaBox" role="radiogroup"></div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>6</span><h2>Material POP recibido</h2></header>
+          <p class="section-note">¿Qué material POP has recibido? (puedes marcar varios)</p>
+          <div class="check-grid" id="materialPopBox"></div>
+          <label class="field" id="materialPopOtroWrap" hidden>
+            <span>Otro (especifica) <span class="req">*</span></span>
+            <input type="text" name="materialPopOtro" placeholder="Describe el material POP" />
+          </label>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>7</span><h2>Calidad de la ejecución del Ejecutivo de Ventas</h2></header>
+          <p class="section-note">¿Cómo calificarías la calidad de la ejecución de tu Ejecutivo de Ventas?</p>
+          <div class="choice-scale" id="calidadEjecutivoBox" role="radiogroup"></div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>8</span><h2>Conocimiento de los beneficios YAAVSER</h2></header>
           <p class="section-note">¿Conoces todos los beneficios de ser YAAVSER?</p>
           <div class="choice-list" id="beneficiosBox" role="radiogroup"></div>
         </section>
 
         <section class="card-section">
-          <header class="section-head"><span>11</span><h2>Redes sociales</h2></header>
+          <header class="section-head"><span>9</span><h2>Redes sociales</h2></header>
           <p class="section-note">¿Nos sigues en redes sociales?</p>
           <div class="choice-list" id="sigueRedesBox" role="radiogroup"></div>
           <div id="redesSocialesWrap" hidden>
-            <p class="section-note" style="margin-top: 0.85rem">¿En cuáles redes?</p>
-            <div class="choice-list" id="redesSocialesBox" role="radiogroup"></div>
+            <p class="section-note" style="margin-top: 0.85rem">¿En cuáles redes? (puedes marcar varias)</p>
+            <div class="check-grid" id="redesSocialesBox"></div>
           </div>
         </section>
 
         <section class="card-section">
-          <header class="section-head"><span>12</span><h2>Comentarios y oportunidades de mejora</h2></header>
+          <header class="section-head"><span>10</span><h2>Otro distribuidor</h2></header>
+          <p class="section-note">¿Trabajas con otro distribuidor?</p>
+          <div class="choice-list" id="otroDistribuidorBox" role="radiogroup"></div>
+          <div id="otroDistribuidorWrap" hidden>
+            <label class="field">
+              <span>¿Cuál es? <span class="req">*</span></span>
+              <input type="text" name="otroDistribuidorCual" placeholder="Nombre del distribuidor" />
+            </label>
+            <label class="field">
+              <span>¿Qué beneficios te otorga? <span class="req">*</span></span>
+              <textarea name="otroDistribuidorBeneficios" rows="2" placeholder="Describe los beneficios"></textarea>
+            </label>
+          </div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>11</span><h2>Comentarios y oportunidades de mejora</h2></header>
           <label class="field">
             <span>¿Qué podríamos mejorar? <span class="req">*</span></span>
             <textarea
@@ -162,7 +170,7 @@
     </main>
 
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-    <script src="/trade/config.js?v=20260824t8"></script>
-    <script src="/trade/app.js?v=20260824t8" defer></script>
+    <script src="/trade/config.js?v=20260827t1"></script>
+    <script src="/trade/app.js?v=20260827t1" defer></script>
   </body>
 </html>

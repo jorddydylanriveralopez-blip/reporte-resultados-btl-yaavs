@@ -28,6 +28,10 @@
   gap: 0.4rem;
 }
 
+.nps-scale-5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .nps-scale label {
   position: relative;
   display: grid;
@@ -164,6 +168,10 @@
     gap: 0.3rem;
   }
 
+  .nps-scale-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
   .nps-scale label {
     min-height: 46px;
     font-size: 0.88rem;
@@ -206,20 +214,13 @@
     gap: 0.4rem;
   }
 
+  .nps-scale-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
   .nps-scale label {
     min-height: 52px;
     font-size: 1rem;
-  }
-
-  .nps-scale label:nth-child(9),
-  .nps-scale label:nth-child(10),
-  .nps-scale label:nth-child(11) {
-    grid-column: span 1;
-  }
-
-  /* 0–3, 4–7, 8–10 (last row 3 cells centered feel via stretch) */
-  .nps-scale label:nth-child(9) {
-    grid-column: 1;
   }
 
   .nps-ends {
@@ -270,6 +271,10 @@
 @media (max-width: 380px) {
   .nps-scale {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .nps-scale-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
   .brand-logo {

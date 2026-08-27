@@ -20,20 +20,28 @@
 
   const LABELS = {
     claveYaavser: "Clave YAAVSER",
-    nps: "NPS (0–10)",
+    satisfaccionGeneral: "Satisfacción general",
+    nps: "Recomendación (1–5)",
+    npsPorque: "¿Por qué?",
     productos: "Productos / servicios",
     atencionEjecutivo: "Atención ejecutivo",
     frecuenciaVisita: "Frecuencia de visita",
-    actualizacionPop: "Actualización POP",
-    satisfaccionPop: "Satisfacción POP",
-    calidadTrade: "Calidad Trade Marketing",
-    mejorarPop: "Mejorar POP",
-    mejorarPopOtro: "Otro (POP)",
-    satisfaccionGeneral: "Satisfacción general",
+    materialPop: "Material POP recibido",
+    materialPopOtro: "Otro material POP",
+    calidadEjecutivo: "Calidad ejecutivo de ventas",
     conocimientoBeneficios: "Beneficios YAAVSER",
     sigueRedes: "¿Nos sigue en redes?",
     redesSociales: "Redes sociales",
+    otroDistribuidor: "¿Otro distribuidor?",
+    otroDistribuidorCual: "Otro distribuidor (cuál)",
+    otroDistribuidorBeneficios: "Beneficios otro distribuidor",
     comentarios: "Comentarios",
+    // Respuestas anteriores al cambio de encuesta
+    actualizacionPop: "Actualización POP (legacy)",
+    satisfaccionPop: "Satisfacción POP (legacy)",
+    calidadTrade: "Calidad Trade (legacy)",
+    mejorarPop: "Mejorar POP (legacy)",
+    mejorarPopOtro: "Otro POP (legacy)",
   };
 
   const PIE_COLORS = ["#00a0c8", "#002b44", "#34c4e8", "#e8c547", "#c83048", "#28785a", "#6b8296", "#014866"];
@@ -87,8 +95,13 @@
     let detractors = 0;
     list.forEach((r) => {
       const n = toNum(r.nps);
-      if (n >= 9) promoters += 1;
-      else if (n <= 6) detractors += 1;
+      if (n <= 5) {
+        if (n >= 4) promoters += 1;
+        else if (n <= 2) detractors += 1;
+      } else {
+        if (n >= 9) promoters += 1;
+        else if (n <= 6) detractors += 1;
+      }
     });
     return Math.round(((promoters - detractors) / list.length) * 100);
   }
@@ -108,10 +121,13 @@
           r.comentarios,
           r.productos,
           r.frecuenciaVisita,
-          r.mejorarPop,
-          r.mejorarPopOtro,
+          r.materialPop,
+          r.materialPopOtro,
+          r.npsPorque,
           r.sigueRedes,
           r.redesSociales,
+          r.otroDistribuidorCual,
+          r.otroDistribuidorBeneficios,
         ]
           .join(" ")
           .toLowerCase();
@@ -130,8 +146,7 @@
       <div class="metric"><span>NPS</span><strong>${npsScore(list)}</strong></div>
       <div class="metric"><span>Prom. recomendación</span><strong>${avg(list, "nps")}</strong></div>
       <div class="metric"><span>Prom. atención</span><strong>${avg(list, "atencionEjecutivo")}</strong></div>
-      <div class="metric"><span>Prom. POP</span><strong>${avg(list, "satisfaccionPop")}</strong></div>
-      <div class="metric"><span>Prom. Trade</span><strong>${avg(list, "calidadTrade")}</strong></div>
+      <div class="metric"><span>Prom. ejecutivo</span><strong>${avg(list, "calidadEjecutivo") || avg(list, "calidadTrade")}</strong></div>
       <div class="metric"><span>Prom. general</span><strong>${avg(list, "satisfaccionGeneral")}</strong></div>
       <div class="metric metric-time"><span>Última sync</span><strong>${
         lastSync ? formatTime(lastSync) : "—"
@@ -213,12 +228,12 @@
 
   function renderCharts(list) {
     const npsMap = new Map();
-    for (let i = 0; i <= 10; i++) npsMap.set(String(i), 0);
     list.forEach((r) => {
-      const k = String(r.nps ?? "");
-      if (npsMap.has(k)) npsMap.set(k, npsMap.get(k) + 1);
+      const k = String(r.nps ?? "").trim();
+      if (!k) return;
+      npsMap.set(k, (npsMap.get(k) || 0) + 1);
     });
-    const npsLabels = [...npsMap.keys()].filter((k) => npsMap.get(k) > 0);
+    const npsLabels = [...npsMap.keys()].sort((a, b) => Number(a) - Number(b));
     const npsValues = npsLabels.map((k) => npsMap.get(k));
     const sat = tallyValues(list, "satisfaccionGeneral");
     const prod = tallyValues(list, "productos");
@@ -233,12 +248,12 @@
         <button type="button" class="item-hit" data-open="${escapeHtml(r.id)}">
           <div class="item-media">
             <div class="item-media-glow" aria-hidden="true"></div>
-            <span class="item-nps">NPS ${escapeHtml(r.nps ?? "—")}</span>
+            <span class="item-nps">Rec. ${escapeHtml(r.nps ?? "—")}</span>
           </div>
           <div class="item-body">
             <h2>${escapeHtml(r.claveYaavser || "Sin clave")}</h2>
-            <p class="item-line">Atención ${escapeHtml(r.atencionEjecutivo || "—")} · POP ${escapeHtml(
-              r.satisfaccionPop || "—",
+            <p class="item-line">Atención ${escapeHtml(r.atencionEjecutivo || "—")} · Ejecutivo ${escapeHtml(
+              r.calidadEjecutivo || r.calidadTrade || "—",
             )} · General ${escapeHtml(r.satisfaccionGeneral || "—")}</p>
             <p class="item-meta">${escapeHtml(r.frecuenciaVisita || "—")}</p>
             <p class="item-date">${formatDate(r.receivedAt || r.timestamp)}</p>
@@ -255,7 +270,7 @@
     if (!r) return;
     modalHero.innerHTML = `
       <h2>${escapeHtml(r.claveYaavser || "Sin clave")}</h2>
-      <p>${formatDate(r.receivedAt || r.timestamp)} · NPS ${escapeHtml(r.nps ?? "—")}</p>
+      <p>${formatDate(r.receivedAt || r.timestamp)} · Recomendación ${escapeHtml(r.nps ?? "—")}</p>
     `;
     modalBody.innerHTML = Object.keys(LABELS)
       .map((key) => {

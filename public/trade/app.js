@@ -53,8 +53,9 @@
   function fillNps() {
     const box = document.getElementById("npsScale");
     if (!box) return;
-    box.innerHTML = Array.from({ length: 11 }, (_, i) => {
-      return `<label><input type="radio" name="nps" value="${i}" required /><span>${i}</span></label>`;
+    box.innerHTML = Array.from({ length: 5 }, (_, i) => {
+      const n = i + 1;
+      return `<label><input type="radio" name="nps" value="${n}" required /><span>${n}</span></label>`;
     }).join("");
   }
 
@@ -90,10 +91,10 @@
       .join("");
   }
 
-  function syncMejorarOtro() {
-    const checked = [...form.querySelectorAll('input[name="mejorarPop"]:checked')].map((el) => el.value);
-    const wrap = document.getElementById("mejorarPopOtroWrap");
-    const input = form.elements.namedItem("mejorarPopOtro");
+  function syncMaterialPopOtro() {
+    const checked = [...form.querySelectorAll('input[name="materialPop"]:checked')].map((el) => el.value);
+    const wrap = document.getElementById("materialPopOtroWrap");
+    const input = form.elements.namedItem("materialPopOtro");
     const open = checked.includes("Otro");
     wrap.hidden = !open;
     if (!open) {
@@ -111,37 +112,62 @@
     const sigue = form.querySelector('input[name="sigueRedes"]:checked')?.value || "";
     const open = sigue === "Sí";
     wrap.hidden = !open;
-    box.querySelectorAll("input").forEach((el) => {
-      if (!open) {
+    if (!open) {
+      box.querySelectorAll("input").forEach((el) => {
         el.checked = false;
-        el.removeAttribute("required");
-      } else {
-        el.setAttribute("required", "required");
-      }
-    });
-    if (!open) box.classList.remove("is-invalid");
+      });
+      box.classList.remove("is-invalid");
+    }
+  }
+
+  function syncOtroDistribuidor() {
+    const wrap = document.getElementById("otroDistribuidorWrap");
+    const cual = form.elements.namedItem("otroDistribuidorCual");
+    const beneficios = form.elements.namedItem("otroDistribuidorBeneficios");
+    const val = form.querySelector('input[name="otroDistribuidor"]:checked')?.value || "";
+    const open = val === "Sí";
+    wrap.hidden = !open;
+    if (!open) {
+      cual.value = "";
+      beneficios.value = "";
+      cual.removeAttribute("required");
+      beneficios.removeAttribute("required");
+      cual.classList.remove("is-invalid");
+      beneficios.classList.remove("is-invalid");
+    } else {
+      cual.setAttribute("required", "required");
+      beneficios.setAttribute("required", "required");
+    }
   }
 
   function collectAnswers() {
     const fd = new FormData(form);
     const productos = [...form.querySelectorAll('input[name="productos"]:checked')].map((el) => el.value);
-    const mejorarPop = [...form.querySelectorAll('input[name="mejorarPop"]:checked')].map((el) => el.value);
+    const materialPop = [...form.querySelectorAll('input[name="materialPop"]:checked')].map((el) => el.value);
     const sigueRedes = String(fd.get("sigueRedes") || "").trim();
+    const otroDistribuidor = String(fd.get("otroDistribuidor") || "").trim();
+    const redesSociales =
+      sigueRedes === "Sí"
+        ? [...form.querySelectorAll('input[name="redesSociales"]:checked')].map((el) => el.value)
+        : [];
     return {
       claveYaavser: String(fd.get("claveYaavser") || "").trim(),
+      satisfaccionGeneral: String(fd.get("satisfaccionGeneral") || "").trim(),
       nps: String(fd.get("nps") || "").trim(),
+      npsPorque: String(fd.get("npsPorque") || "").trim(),
       productos,
       atencionEjecutivo: String(fd.get("atencionEjecutivo") || "").trim(),
       frecuenciaVisita: String(fd.get("frecuenciaVisita") || "").trim(),
-      actualizacionPop: String(fd.get("actualizacionPop") || "").trim(),
-      satisfaccionPop: String(fd.get("satisfaccionPop") || "").trim(),
-      calidadTrade: String(fd.get("calidadTrade") || "").trim(),
-      mejorarPop,
-      mejorarPopOtro: String(fd.get("mejorarPopOtro") || "").trim(),
-      satisfaccionGeneral: String(fd.get("satisfaccionGeneral") || "").trim(),
+      materialPop,
+      materialPopOtro: String(fd.get("materialPopOtro") || "").trim(),
+      calidadEjecutivo: String(fd.get("calidadEjecutivo") || "").trim(),
       conocimientoBeneficios: String(fd.get("conocimientoBeneficios") || "").trim(),
       sigueRedes,
-      redesSociales: sigueRedes === "Sí" ? String(fd.get("redesSociales") || "").trim() : "",
+      redesSociales,
+      otroDistribuidor,
+      otroDistribuidorCual: otroDistribuidor === "Sí" ? String(fd.get("otroDistribuidorCual") || "").trim() : "",
+      otroDistribuidorBeneficios:
+        otroDistribuidor === "Sí" ? String(fd.get("otroDistribuidorBeneficios") || "").trim() : "",
       comentarios: String(fd.get("comentarios") || "").trim(),
     };
   }
@@ -152,9 +178,17 @@
       markInvalid(form.elements.namedItem("claveYaavser"));
       return "Captura la clave YAAVSER.";
     }
+    if (isBlank(a.satisfaccionGeneral)) {
+      markInvalid(document.getElementById("satisfaccionGeneralBox"));
+      return "Califica tu experiencia general con YAAVS.";
+    }
     if (isBlank(a.nps)) {
       markInvalid(document.getElementById("npsScale"));
-      return "Selecciona una calificación de 0 a 10.";
+      return "Selecciona una calificación de 1 a 5.";
+    }
+    if (isBlank(a.npsPorque)) {
+      markInvalid(form.elements.namedItem("npsPorque"));
+      return "Cuéntanos por qué diste esa calificación.";
     }
     if (!a.productos.length) {
       markInvalid(document.getElementById("productosBox"));
@@ -168,29 +202,17 @@
       markInvalid(document.getElementById("frecuenciaBox"));
       return "Indica la frecuencia de visita.";
     }
-    if (isBlank(a.actualizacionPop)) {
-      markInvalid(document.getElementById("actualizacionPopBox"));
-      return "Indica si recibiste actualización de material POP.";
+    if (!a.materialPop.length) {
+      markInvalid(document.getElementById("materialPopBox"));
+      return "Marca al menos un material POP recibido.";
     }
-    if (isBlank(a.satisfaccionPop)) {
-      markInvalid(document.getElementById("satisfaccionPopBox"));
-      return "Califica tu satisfacción con el material POP.";
+    if (a.materialPop.includes("Otro") && isBlank(a.materialPopOtro)) {
+      markInvalid(form.elements.namedItem("materialPopOtro"));
+      return "Especifica el otro material POP.";
     }
-    if (isBlank(a.calidadTrade)) {
-      markInvalid(document.getElementById("calidadTradeBox"));
-      return "Califica la calidad de la ejecución de Trade Marketing.";
-    }
-    if (!a.mejorarPop.length) {
-      markInvalid(document.getElementById("mejorarPopBox"));
-      return "Marca al menos un aspecto a mejorar del material POP.";
-    }
-    if (a.mejorarPop.includes("Otro") && isBlank(a.mejorarPopOtro)) {
-      markInvalid(form.elements.namedItem("mejorarPopOtro"));
-      return "Especifica el otro aspecto a mejorar.";
-    }
-    if (isBlank(a.satisfaccionGeneral)) {
-      markInvalid(document.getElementById("satisfaccionGeneralBox"));
-      return "Califica tu experiencia general con YAAVS.";
+    if (isBlank(a.calidadEjecutivo)) {
+      markInvalid(document.getElementById("calidadEjecutivoBox"));
+      return "Califica la calidad de la ejecución del Ejecutivo de Ventas.";
     }
     if (isBlank(a.conocimientoBeneficios)) {
       markInvalid(document.getElementById("beneficiosBox"));
@@ -200,9 +222,21 @@
       markInvalid(document.getElementById("sigueRedesBox"));
       return "Indica si nos sigues en redes sociales.";
     }
-    if (a.sigueRedes === "Sí" && isBlank(a.redesSociales)) {
+    if (a.sigueRedes === "Sí" && !a.redesSociales.length) {
       markInvalid(document.getElementById("redesSocialesBox"));
-      return "Selecciona Instagram, Facebook o Ambas.";
+      return "Marca al menos una red social.";
+    }
+    if (isBlank(a.otroDistribuidor)) {
+      markInvalid(document.getElementById("otroDistribuidorBox"));
+      return "Indica si trabajas con otro distribuidor.";
+    }
+    if (a.otroDistribuidor === "Sí" && isBlank(a.otroDistribuidorCual)) {
+      markInvalid(form.elements.namedItem("otroDistribuidorCual"));
+      return "Indica cuál es el otro distribuidor.";
+    }
+    if (a.otroDistribuidor === "Sí" && isBlank(a.otroDistribuidorBeneficios)) {
+      markInvalid(form.elements.namedItem("otroDistribuidorBeneficios"));
+      return "Indica qué beneficios te otorga el otro distribuidor.";
     }
     if (isBlank(a.comentarios)) {
       markInvalid(form.elements.namedItem("comentarios"));
@@ -217,8 +251,9 @@
     t?.closest?.(".nps-scale, .check-grid, .choice-list, .choice-scale, .field")?.classList.remove(
       "is-invalid",
     );
-    if (t?.name === "mejorarPop") syncMejorarOtro();
+    if (t?.name === "materialPop") syncMaterialPopOtro();
     if (t?.name === "sigueRedes") syncRedesSociales();
+    if (t?.name === "otroDistribuidor") syncOtroDistribuidor();
   });
 
   form.addEventListener("submit", async (e) => {
@@ -259,25 +294,26 @@
   document.getElementById("anotherBtn")?.addEventListener("click", () => {
     form.reset();
     clearInvalid();
-    syncMejorarOtro();
+    syncMaterialPopOtro();
     syncRedesSociales();
+    syncOtroDistribuidor();
     successPanel.hidden = true;
     form.hidden = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
   fillNps();
+  fillRadios("satisfaccionGeneralBox", "satisfaccionGeneral", opts.satisfaccionGeneral || [], true);
   fillChecks("productosBox", "productos", opts.productos || []);
   fillRadios("atencionBox", "atencionEjecutivo", opts.atencion || [], true);
   fillRadios("frecuenciaBox", "frecuenciaVisita", opts.frecuencia || []);
-  fillRadios("actualizacionPopBox", "actualizacionPop", opts.actualizacionPop || []);
-  fillRadios("satisfaccionPopBox", "satisfaccionPop", opts.satisfaccionPop || [], true);
-  fillRadios("calidadTradeBox", "calidadTrade", opts.calidadTrade || [], true);
-  fillChecks("mejorarPopBox", "mejorarPop", opts.mejorarPop || []);
-  fillRadios("satisfaccionGeneralBox", "satisfaccionGeneral", opts.satisfaccionGeneral || [], true);
+  fillChecks("materialPopBox", "materialPop", opts.materialPop || []);
+  fillRadios("calidadEjecutivoBox", "calidadEjecutivo", opts.calidadEjecutivo || [], true);
   fillRadios("beneficiosBox", "conocimientoBeneficios", opts.beneficios || []);
   fillRadios("sigueRedesBox", "sigueRedes", opts.sigueRedes || []);
-  fillRadios("redesSocialesBox", "redesSociales", opts.redesSociales || []);
-  syncMejorarOtro();
+  fillChecks("redesSocialesBox", "redesSociales", opts.redesSociales || []);
+  fillRadios("otroDistribuidorBox", "otroDistribuidor", opts.otroDistribuidor || []);
+  syncMaterialPopOtro();
   syncRedesSociales();
+  syncOtroDistribuidor();
 })();
