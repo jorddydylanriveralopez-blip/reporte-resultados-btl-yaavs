@@ -30,8 +30,8 @@
     frecuenciaVisita: "Frecuencia de visita",
     materialPop: "Material POP recibido",
     materialPopOtro: "Otro material POP",
-    calidadEjecutivo: "Calidad ejecutivo de ventas",
-    conocimientoBeneficios: "Beneficios YAAVSER",
+    calidadEjecutivo: "Calidad ejecutivo de ventas (legacy)",
+    conocimientoBeneficios: "Beneficios YAAVSER (legacy)",
     sigueRedes: "¿Nos sigue en redes?",
     redesSociales: "Redes sociales",
     otroDistribuidor: "¿Otro distribuidor?",
@@ -150,7 +150,6 @@
       <div class="metric"><span>NPS</span><strong>${npsScore(list)}</strong></div>
       <div class="metric"><span>Prom. recomendación</span><strong>${avg(list, "nps")}</strong></div>
       <div class="metric"><span>Prom. atención</span><strong>${avg(list, "atencionEjecutivo")}</strong></div>
-      <div class="metric"><span>Prom. ejecutivo</span><strong>${avg(list, "calidadEjecutivo") || avg(list, "calidadTrade")}</strong></div>
       <div class="metric"><span>Prom. general</span><strong>${avg(list, "satisfaccionGeneral")}</strong></div>
       <div class="metric metric-time"><span>Última sync</span><strong>${
         lastSync ? formatTime(lastSync) : "—"
@@ -256,9 +255,7 @@
           </div>
           <div class="item-body">
             <h2>${escapeHtml(r.claveYaavser || "Sin clave")}</h2>
-            <p class="item-line">Atención ${escapeHtml(r.atencionEjecutivo || "—")} · Ejecutivo ${escapeHtml(
-              r.calidadEjecutivo || r.calidadTrade || "—",
-            )} · General ${escapeHtml(r.satisfaccionGeneral || "—")}</p>
+            <p class="item-line">Atención ${escapeHtml(r.atencionEjecutivo || "—")} · General ${escapeHtml(r.satisfaccionGeneral || "—")}</p>
             <p class="item-meta">${escapeHtml(r.frecuenciaVisita || "—")}</p>
             <p class="item-date">${formatDate(r.receivedAt || r.timestamp)}</p>
           </div>

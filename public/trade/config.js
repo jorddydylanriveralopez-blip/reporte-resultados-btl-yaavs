@@ -32,18 +32,11 @@ window.YAAVS_TRADE_OPTIONS = {
   materialPop: [
     "Lona",
     "Stopper",
-    "Chipotera",
+    "Chipcera",
     "Activación BTL",
     "Vinil",
     "Electrostático",
     "Otro",
-  ],
-  calidadEjecutivo: [
-    { value: "1", label: "Pésima" },
-    { value: "2", label: "Mala" },
-    { value: "3", label: "Regular" },
-    { value: "4", label: "Buena" },
-    { value: "5", label: "Excelente" },
   ],
   satisfaccionGeneral: [
     { value: "1", label: "Muy insatisfecho(a)" },
@@ -51,12 +44,6 @@ window.YAAVS_TRADE_OPTIONS = {
     { value: "3", label: "Neutral" },
     { value: "4", label: "Satisfecho(a)" },
     { value: "5", label: "Muy satisfecho(a)" },
-  ],
-  beneficios: [
-    "Sí, conozco todos los beneficios",
-    "Conozco algunos beneficios",
-    "No, no conozco todos los beneficios",
-    "No conozco los beneficios",
   ],
   sigueRedes: ["Sí", "No"],
   redesSociales: ["Instagram", "Facebook", "TikTok"],

@@ -177,8 +177,6 @@
       frecuenciaVisita: String(fd.get("frecuenciaVisita") || "").trim(),
       materialPop,
       materialPopOtro: String(fd.get("materialPopOtro") || "").trim(),
-      calidadEjecutivo: String(fd.get("calidadEjecutivo") || "").trim(),
-      conocimientoBeneficios: String(fd.get("conocimientoBeneficios") || "").trim(),
       sigueRedes,
       redesSociales,
       otroDistribuidor,
@@ -234,14 +232,6 @@
     if (a.materialPop.includes("Otro") && isBlank(a.materialPopOtro)) {
       markInvalid(form.elements.namedItem("materialPopOtro"));
       return "Especifica el otro material POP.";
-    }
-    if (isBlank(a.calidadEjecutivo)) {
-      markInvalid(document.getElementById("calidadEjecutivoBox"));
-      return "Califica la calidad de la ejecución del Ejecutivo de Ventas.";
-    }
-    if (isBlank(a.conocimientoBeneficios)) {
-      markInvalid(document.getElementById("beneficiosBox"));
-      return "Indica qué tanto conoces los beneficios YAAVSER.";
     }
     if (isBlank(a.sigueRedes)) {
       markInvalid(document.getElementById("sigueRedesBox"));
@@ -336,8 +326,6 @@
   fillRadios("atencionBox", "atencionEjecutivo", opts.atencion || [], true);
   fillRadios("frecuenciaBox", "frecuenciaVisita", opts.frecuencia || []);
   fillChecks("materialPopBox", "materialPop", opts.materialPop || []);
-  fillRadios("calidadEjecutivoBox", "calidadEjecutivo", opts.calidadEjecutivo || [], true);
-  fillRadios("beneficiosBox", "conocimientoBeneficios", opts.beneficios || []);
   fillRadios("sigueRedesBox", "sigueRedes", opts.sigueRedes || []);
   fillChecks("redesSocialesBox", "redesSociales", opts.redesSociales || []);
   fillRadios("otroDistribuidorBox", "otroDistribuidor", opts.otroDistribuidor || []);
